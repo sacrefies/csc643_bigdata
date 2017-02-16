@@ -1,2 +1,3 @@
-# csc643_bigdata
-This repository is for the projects and assignments of CSC643, Big Data.
+# The Source
+All the source files reside here. They are managed with project directories.
+
