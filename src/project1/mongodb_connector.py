@@ -39,7 +39,7 @@ class MongoDB(object):
         :return: A legal MongoDB connection string from the settings.
         """
         self.__conn_str = "%s%s:%s/" % (DB_PROTOCOL, DB_HOST, DB_PORT)
-        return __conn_str
+        return self.__conn_str
 
     def get_client(self):
         """Connect to the MongoDB and return a client object.
@@ -48,12 +48,12 @@ class MongoDB(object):
         :return: An instance of class MongoClient
         """
         if self.__client:
-            return __client
+            return self.__client
 
         self.__client = MongoClient(self.simple_connction_string())
         try:
             # The ismaster command is cheap and does not require auth.
-            client.admin.command('ismaster')
+            self.__client.admin.command('ismaster')
         except ConnectionFailure as cf:
             print 'Connecting to MongoDB failed: ', cf
             self.__client = None
@@ -78,3 +78,34 @@ class MongoDB(object):
             print 'No such database: %s. %s' % (dbname, ine)
 
         return self.__db
+
+    def close(self):
+        if self.__client:
+            self.__client.close()
+        self.__db = None
+        self.__client = None
+        self.__conn_str = None
+
+
+# unit tests
+if __name__ == '__main__':
+    mongo = MongoDB()
+    cli = mongo.get_client()
+    if cli and cli.database_names():
+        print 'connect successful'
+        print 'databases: ',
+        for n in cli.database_names():
+            print '%s, ' % n,
+        print ''
+    db = mongo.get_database()
+    if db:
+        print 'database connected'
+        print 'database test collections: ',
+        for n in db.collection_names():
+            print '%s, ' % n,
+        print ''
+        print 'database test get document count: ',
+        collection = db[db.collection_names()[0]]
+        print collection.count()
+    mongo.close();
+    print 'Test finished'
