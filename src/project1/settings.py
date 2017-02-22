@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: <encoding name> -*-
+# -*- coding: utf-8 -*-
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -37,3 +37,4 @@ if __name__ == '__main__':
     client = MongoClient(conn_string)
     for db in client.database_names():
         print '%s, ' % db ,
+    client.close()
