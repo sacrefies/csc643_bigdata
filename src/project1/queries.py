@@ -31,8 +31,12 @@ Each query is represented by a function.
 from mongodb_connector import MongoDB
 from bson.code import Code
 
-
-
+def totalCities():
+	mongo = MongoDB()
+	db = mongo.get_database()
+	collection = db[db.collection_names()[1]] #This number seems to depend on my system. 
+	cityList = collection.distinct('city')
+	return len(cityList) 
 
 
 
@@ -41,4 +45,5 @@ if __name__ == '__main__':
     # run the queries one by one
     print ':::::::: BigData Course Project 1: Queries to MongoDB ::::::::'
     # insert query function invocations here
+    print "Total Cities:" + str(totalCities())
     print ':::::::: Project 1 Run Ends ::::::::'
