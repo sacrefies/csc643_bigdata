@@ -34,11 +34,24 @@ from bson.code import Code
 def totalCities():
 	mongo = MongoDB()
 	db = mongo.get_database()
-	collection = db[db.collection_names()[1]] #This number seems to depend on my system. 
+	collection = db[db.collection_names()[2]] #This number seems to depend on my system. 
 	cityList = collection.distinct('city')
 	return len(cityList) 
 
-
+def leastPopulatedState():
+    mongo = MongoDB()
+    db = mongo.get_database()
+    #print db[db.collection_names()[2]]
+    collection = db[db.collection_names()[2]] #This number seems to depend on my system. 
+    mapper = Code(""" 
+	             function() { emit(this.state, this.pop); };
+             """)
+    reducer = Code("""
+	              function(state, pop) { return Array.sum(pop); };
+				""")
+    result = collection.map_reduce(mapper, reducer, "theResult")
+    answer = result.find().sort( 'pop', 1 ).limit(1)
+    return answer
 
 # runner
 if __name__ == '__main__':
@@ -46,4 +59,7 @@ if __name__ == '__main__':
     print ':::::::: BigData Course Project 1: Queries to MongoDB ::::::::'
     # insert query function invocations here
     print "Total Cities:" + str(totalCities())
+    print("Least Populus State:")
+    for doc in leastPopulatedState():
+		print(doc)
     print ':::::::: Project 1 Run Ends ::::::::'
