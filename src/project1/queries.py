@@ -30,9 +30,8 @@ Each query is represented by a function.
 
 from mongodb_connector import MongoDB
 from bson.code import Code
+from settings import COLLECTION
 
-
-COLLECTION = 'zipcodes'
 
 def total_cities(mongodb):
     """This query function returns the total number of cities in the database."""
