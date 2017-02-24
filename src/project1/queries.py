@@ -31,35 +31,69 @@ Each query is represented by a function.
 from mongodb_connector import MongoDB
 from bson.code import Code
 
-def totalCities():
-	mongo = MongoDB()
-	db = mongo.get_database()
-	collection = db[db.collection_names()[2]] #This number seems to depend on my system. 
-	cityList = collection.distinct('city')
-	return len(cityList) 
 
-def leastPopulatedState():
-    mongo = MongoDB()
-    db = mongo.get_database()
-    #print db[db.collection_names()[2]]
-    collection = db[db.collection_names()[2]] #This number seems to depend on my system. 
-    mapper = Code(""" 
+COLLECTION = 'zipcodes'
+
+def total_cities(mongodb):
+    """This query function returns the total number of cities in the database."""
+    db = mongodb.get_database()
+    return len(db[COLLECTION].distinct('city'))
+
+
+def least_populated_state(mongodb):
+    """A mapReducer to find the least densely-populated state(s)."""
+    db = mongodb.get_database()
+    # print db[db.collection_names()[2]]
+    collection = db[COLLECTION]  # This number seems to depend on my system.
+    mapper = Code("""
 	             function() { emit(this.state, this.pop); };
              """)
     reducer = Code("""
 	              function(state, pop) { return Array.sum(pop); };
 				""")
     result = collection.map_reduce(mapper, reducer, "theResult")
-    answer = result.find().sort( 'pop', 1 ).limit(1)
-    return answer
+    rs = result.find().sort('pop', 1).limit(1)
+    # print rs[0]['_id'], ' ', rs[0]['value']
+    return {rs[0]['_id']:rs[0]['value']}
+
+
+def total_cities_with_map_reduce(mongodb):
+    """A mapReducer to compute the total number of cities"""
+
+    db = mongodb.get_database()
+    col = db[COLLECTION]
+    mapper = Code('function() {emit(this.city, 1);}')
+    reducer = Code('function(key, values) {return Array.sum(values);}')
+    rs = col.map_reduce(mapper, reducer, 'city_counts')
+    return rs.find().count()
+
+
+def state_population_with_map_reduce(mongodb):
+    """A mapReducer to compute total population in each state."""
+    db = mongodb.get_database()
+    col = db[COLLECTION]
+    mapper = Code('function() {emit(this.state, this.pop);}')
+    reducer = Code('function(key, values) {return Array.sum(values);}')
+    rs = col.map_reduce(mapper, reducer, 'state_pops')
+    return rs.find()
+
 
 # runner
 if __name__ == '__main__':
     # run the queries one by one
     print ':::::::: BigData Course Project 1: Queries to MongoDB ::::::::'
+    mongodb = MongoDB()
     # insert query function invocations here
-    print "Total Cities:" + str(totalCities())
-    print("Least Populus State:")
-    for doc in leastPopulatedState():
-		print(doc)
+    print "Total Cities:", total_cities(mongodb)
+
+    print "Least Populus State:",
+    for (k, v) in least_populated_state(mongodb).items():
+        print k, ':', v
+
+    print 'Total Cities by Map/Reduce: ', total_cities_with_map_reduce(mongodb)
+
+    print 'Total Populations for Each State by Map/Reduce: '
+    for r in state_population_with_map_reduce(mongodb):
+        print r['_id'], ':', r['value']
+    mongodb.close()
     print ':::::::: Project 1 Run Ends ::::::::'
