@@ -49,7 +49,7 @@ def list_states_cities_populations(mongodb):
         temp.append(s["city"])
         temp.append(s["pop"])
         array.append(temp)
-        return print(temp)
+    return array
 
 def list_massachusetts_populations(mongodb):
     """This query function returns the list the cities in the state of Massachusetts with populations between 1000 and 2000."""
