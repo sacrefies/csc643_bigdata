@@ -38,6 +38,24 @@ def total_cities(mongodb):
     db = mongodb.get_database()
     return len(db[COLLECTION].distinct('city'))
 
+def list_states_cities_populations(mongodb):
+    """This query function returns the list of states, cities, populations in the database."""
+    db = mongodb.get_database()
+    collection = db[COLLECTION]
+    array = []
+    for s in collection.find():
+        temp = []
+        temp.append(s["State"])
+        temp.append(s["city"])
+        temp.append(s["pop"])
+        array.append(temp)
+        return print(temp)
+
+def list_massachusetts_populations(mongodb):
+    """This query function returns the list the cities in the state of Massachusetts with populations between 1000 and 2000."""
+    db = mongodb.get_database()
+    collection = db[COLLECTION]
+    return list(collection.find({"$and": [{"state": "MA"}, {"pop": {"$gte":1000, "$lte": 2000}}]}))
 
 def least_populated_state(mongodb):
     """A mapReducer to find the least densely-populated state(s)."""
