@@ -69,7 +69,7 @@ def least_populated_state(mongodb):
 	              function(state, pop) { return Array.sum(pop); };
 				""")
     result = collection.map_reduce(mapper, reducer, "theResult")
-    rs = result.find().sort('pop', 1).limit(1)
+    rs = result.find().sort('value', 1).limit(1)
     # print rs[0]['_id'], ' ', rs[0]['value']
     return {rs[0]['_id']:rs[0]['value']}
 
@@ -94,7 +94,16 @@ def state_population_with_map_reduce(mongodb):
     rs = col.map_reduce(mapper, reducer, 'state_pops')
     return rs.find()
 
-
+def average_state_population_with_map_reduce(mongodb):
+    """A mapReducer to compute the average population in each state."""
+    db = mongodb.get_database()
+    collection = db[COLLECTION]
+    mapper = Code('function() {for(var i = 0; i < this._id.length; i++) { var key = this.state; var value = { count: 1, pop: this.pop}; emit(key, value);} }')
+    reducer = Code('function(key, values) {reduceval = {count: 0, pop: 0}; for(var i=0; i < values.length; i++) {reduceval.count += values[i].count; reduceval.pop += values[i].pop; } return reduceval; }')
+    finalizer = Code('function(key, reduceval) { reduceval.avg = reduceval.pop / reduceval.count; return reduceval;}')
+    result = collection.map_reduce(mapper, reducer, 'state_avgs', finalize=finalizer)
+    return result.find()
+	
 # runner
 if __name__ == '__main__':
     # run the queries one by one
@@ -112,5 +121,9 @@ if __name__ == '__main__':
     print 'Total Populations for Each State by Map/Reduce: '
     for r in state_population_with_map_reduce(mongodb):
         print r['_id'], ':', r['value']
+    
+    print 'Average Population for Each State with MapReduce:'
+    for r in average_state_population_with_map_reduce(mongodb):
+	    print r['_id'], ':', r['value']['avg']
     mongodb.close()
     print ':::::::: Project 1 Run Ends ::::::::'
