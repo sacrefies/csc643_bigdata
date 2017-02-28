@@ -61,8 +61,7 @@ def list_massachusetts_populations(mongodb):
 def least_populated_state(mongodb):
     """A mapReducer to find the least densely-populated state(s)."""
     db = mongodb.get_database()
-    # print db[db.collection_names()[2]]
-    collection = db[COLLECTION]  # This number seems to depend on my system.
+    collection = db[COLLECTION]  
     mapper = Code("""
 	             function() { emit(this.state, this.pop); };
              """)
@@ -71,11 +70,10 @@ def least_populated_state(mongodb):
 				""")
     result = collection.map_reduce(mapper, reducer, "theResult")
     rs = result.find().sort('value', 1).limit(1)
-    # print rs[0]['_id'], ' ', rs[0]['value']
     return {rs[0]['_id']:rs[0]['value']}
 
 
-def total_cities_with_map_reduce(mongodb):
+def total_cities_with_map_reduce(mongodb): #EXTRA Query 
     """A mapReducer to compute the total number of cities"""
 
     db = mongodb.get_database()
@@ -86,7 +84,7 @@ def total_cities_with_map_reduce(mongodb):
     return rs.find().count()
 
 
-def state_population_with_map_reduce(mongodb):
+def state_population_with_map_reduce(mongodb): #Extra Query 
     """A mapReducer to compute total population in each state."""
     db = mongodb.get_database()
     col = db[COLLECTION]
