@@ -45,11 +45,12 @@ def list_states_cities_populations(mongodb):
     array = []
     for s in collection.find():
         temp = []
-        temp.append(s["State"])
+        temp.append(s["state"])
         temp.append(s["city"])
         temp.append(s["pop"])
         array.append(temp)
     return array
+
 
 def list_massachusetts_populations(mongodb):
     """This query function returns the list the cities in the state of Massachusetts with populations between 1000 and 2000."""
@@ -104,14 +105,14 @@ def average_state_population_with_map_reduce(mongodb):
     result = collection.map_reduce(mapper, reducer, 'state_avgs', finalize=finalizer)
     return result.find()
 
-def state_pop_city_count(mongodb): 
+def state_pop_city_count(mongodb):
     db = mongodb.get_database()
     collection = db[COLLECTION]
     mapper = Code('function() {for(var i = 0; i < this._id.length; i++) { var key = this.state; var value = { count: 1, pop: this.pop}; emit(key, value);} }')
     reducer = Code('function(key, values) {reduceval = {count: 0, pop: 0}; for(var i=0; i < values.length; i++) {reduceval.count += values[i].count; reduceval.pop += values[i].pop; } return reduceval; }')
     result = collection.map_reduce(mapper, reducer, 'state_counts')
     return result.find()
-	
+
 # runner
 if __name__ == '__main__':
     # run the queries one by one
@@ -119,6 +120,10 @@ if __name__ == '__main__':
     mongodb = MongoDB()
     # insert query function invocations here
     print "Total Cities:", total_cities(mongodb)
+
+    print "States_Cities_Popuplations:", list_states_cities_populations(mongodb)
+
+    print "list_massachusetts_populations", list_massachusetts_populations(mongodb)
 
     print "Least Populus State:",
     for (k, v) in least_populated_state(mongodb).items():
@@ -129,11 +134,11 @@ if __name__ == '__main__':
     print 'Total Populations for Each State by Map/Reduce: '
     for r in state_population_with_map_reduce(mongodb):
         print r['_id'], ':', r['value']
-    
+
     print 'Average Population for Each State with MapReduce:'
     for r in average_state_population_with_map_reduce(mongodb):
 	    print r['_id'], ':', r['value']['avg']
-    
+
     print 'City Count and Total Population per State:'
     for r in state_pop_city_count(mongodb):
 	    print r['_id'], ':', r['value']['count'], ':', r['value']['pop']
