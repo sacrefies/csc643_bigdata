@@ -103,6 +103,14 @@ def average_state_population_with_map_reduce(mongodb):
     finalizer = Code('function(key, reduceval) { reduceval.avg = reduceval.pop / reduceval.count; return reduceval;}')
     result = collection.map_reduce(mapper, reducer, 'state_avgs', finalize=finalizer)
     return result.find()
+
+def state_pop_city_count(mongodb): 
+    db = mongodb.get_database()
+    collection = db[COLLECTION]
+    mapper = Code('function() {for(var i = 0; i < this._id.length; i++) { var key = this.state; var value = { count: 1, pop: this.pop}; emit(key, value);} }')
+    reducer = Code('function(key, values) {reduceval = {count: 0, pop: 0}; for(var i=0; i < values.length; i++) {reduceval.count += values[i].count; reduceval.pop += values[i].pop; } return reduceval; }')
+    result = collection.map_reduce(mapper, reducer, 'state_counts')
+    return result.find()
 	
 # runner
 if __name__ == '__main__':
@@ -125,5 +133,9 @@ if __name__ == '__main__':
     print 'Average Population for Each State with MapReduce:'
     for r in average_state_population_with_map_reduce(mongodb):
 	    print r['_id'], ':', r['value']['avg']
+    
+    print 'City Count and Total Population per State:'
+    for r in state_pop_city_count(mongodb):
+	    print r['_id'], ':', r['value']['count'], ':', r['value']['pop']
     mongodb.close()
     print ':::::::: Project 1 Run Ends ::::::::'
