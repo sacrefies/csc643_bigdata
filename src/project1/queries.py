@@ -31,6 +31,7 @@ Each query is represented by a function.
 from mongodb_connector import MongoDB
 from bson.code import Code
 from settings import COLLECTION
+from bson.son import SON
 
 
 def total_cities(mongodb):
@@ -42,26 +43,38 @@ def list_states_cities_populations(mongodb):
     """This query function returns the list of states, cities, populations in the database."""
     db = mongodb.get_database()
     collection = db[COLLECTION]
-    array = []
-    for s in collection.find():
-        temp = []
-        temp.append(s["state"])
-        temp.append(s["city"])
-        temp.append(s["pop"])
-        array.append(temp)
-    return array
+    pipline = [
+        {"$project": {"state": 1, "city": 1,  "pop": 1}},
+        {"$group": {
+            "_id": SON([("state","$state"), ("city", "$city")]),
+            "popTotal": {"$sum": "$pop"}
+        }},
+        {"$sort": {"_id.state": 1}}
+    ]
+    return collection.aggregate(pipline)
 
 
 def list_massachusetts_populations(mongodb):
     """This query function returns the list the cities in the state of Massachusetts with populations between 1000 and 2000."""
     db = mongodb.get_database()
     collection = db[COLLECTION]
-    return list(collection.find({"$and": [{"state": "MA"}, {"pop": {"$gte":1000, "$lte": 2000}}]}))
+    pipline = [
+        {"$match": {"state": "MA"}},
+        {"$group": {
+            "_id": SON([("state","$state"), ("city", "$city")]),
+            "popTotal": {"$sum": "$pop"}
+        }},
+        {"$match": {"popTotal": {"$gte":1000, "$lte": 2000}}}
+    ]
+    for d in collection.aggregate(pipline):
+        print d
+    #return collection.aggregate(pipline)
+    # return list(collection.find({"$and": [{"state": "MA"}, {"pop": {"$gte":1000, "$lte": 2000}}]}))
 
 def least_populated_state(mongodb):
     """A mapReducer to find the least densely-populated state(s)."""
     db = mongodb.get_database()
-    collection = db[COLLECTION]  
+    collection = db[COLLECTION]
     mapper = Code("""
 	             function() { emit(this.state, this.pop); };
              """)
@@ -73,7 +86,7 @@ def least_populated_state(mongodb):
     return {rs[0]['_id']:rs[0]['value']}
 
 
-def total_cities_with_map_reduce(mongodb): #EXTRA Query 
+def total_cities_with_map_reduce(mongodb): #EXTRA Query
     """A mapReducer to compute the total number of cities"""
 
     db = mongodb.get_database()
@@ -84,7 +97,7 @@ def total_cities_with_map_reduce(mongodb): #EXTRA Query
     return rs.find().count()
 
 
-def state_population_with_map_reduce(mongodb): #Extra Query 
+def state_population_with_map_reduce(mongodb): #Extra Query
     """A mapReducer to compute total population in each state."""
     db = mongodb.get_database()
     col = db[COLLECTION]
@@ -119,7 +132,9 @@ if __name__ == '__main__':
     # insert query function invocations here
     print "Total Cities:", total_cities(mongodb)
 
-    print "States_Cities_Popuplations:", list_states_cities_populations(mongodb)
+    print "States_Cities_Popuplations:"
+    for doc in list_states_cities_populations(mongodb):
+        print doc
 
     print "list_massachusetts_populations", list_massachusetts_populations(mongodb)
 
