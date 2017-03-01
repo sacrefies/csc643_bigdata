@@ -60,7 +60,6 @@ def list_massachusetts_populations(mongodb):
     """This query function returns the list the cities in the state of Massachusetts with populations between 1000 and 2000."""
     db = mongodb.get_database()
     collection = db[COLLECTION]
-<<<<<<< HEAD
     pipline = [
         {"$match": {"state": "MA"}},
         {"$group": {
@@ -69,14 +68,9 @@ def list_massachusetts_populations(mongodb):
         }},
         {"$match": {"popTotal": {"$gte":1000, "$lte": 2000}}}
     ]
-    for d in collection.aggregate(pipline):
-        print d
-    #return collection.aggregate(pipline)
-    # return list(collection.find({"$and": [{"state": "MA"}, {"pop": {"$gte":1000, "$lte": 2000}}]}))
-=======
-    return list(collection.find({"$and": [{"state": "MA"}, {"pop": {"$gte": 1000, "$lte": 2000}}]}))
 
->>>>>>> da5ab1610c316985113641055df0fb95c277c5fd
+    return collection.aggregate(pipline)
+
 
 def least_populated_state(mongodb):
     """A mapReducer to find the least densely-populated state(s)."""
@@ -93,29 +87,6 @@ def least_populated_state(mongodb):
     return {rs[0]['_id']: rs[0]['value']}
 
 
-<<<<<<< HEAD
-def total_cities_with_map_reduce(mongodb): #EXTRA Query
-    """A mapReducer to compute the total number of cities"""
-
-    db = mongodb.get_database()
-    col = db[COLLECTION]
-    mapper = Code('function() {emit(this.city, 1);}')
-    reducer = Code('function(key, values) {return Array.sum(values);}')
-    rs = col.map_reduce(mapper, reducer, 'city_counts')
-    return rs.find().count()
-
-
-def state_population_with_map_reduce(mongodb): #Extra Query
-    """A mapReducer to compute total population in each state."""
-    db = mongodb.get_database()
-    col = db[COLLECTION]
-    mapper = Code('function() {emit(this.state, this.pop);}')
-    reducer = Code('function(key, values) {return Array.sum(values);}')
-    rs = col.map_reduce(mapper, reducer, 'state_pops')
-    return rs.find()
-
-=======
->>>>>>> da5ab1610c316985113641055df0fb95c277c5fd
 def average_state_population_with_map_reduce(mongodb):
     """A mapReducer to compute the average population in each state."""
     db = mongodb.get_database()
@@ -181,21 +152,19 @@ if __name__ == '__main__':
     print ':::::::: BigData Course Project 1: Queries to MongoDB ::::::::\n'
     mongodb = MongoDB()
     # insert query function invocations here
-<<<<<<< HEAD
-    print "Total Cities:", total_cities(mongodb)
-
-    print "States_Cities_Popuplations:"
-    for doc in list_states_cities_populations(mongodb):
-        print doc
-=======
     print "a) Total Cities:", total_cities(mongodb), "\n"
->>>>>>> da5ab1610c316985113641055df0fb95c277c5fd
 
-    # print "b) States_Cities_Popuplations:",
-    # list_states_cities_populations(mongodb)
+    print "b) States_Cities_Popuplations:"
+    for d in list_states_cities_populations(mongodb):
+        print 'state: %s city: %s pop: %.2f' % \
+            (d["_id"]["state"], d["_id"]["city"], d["popTotal"])
+    print "\n"
 
-    # print "c) list_massachusetts_populations",
-    # list_massachusetts_populations(mongodb)
+    print "c) list_massachusetts_populations"
+    for d in list_massachusetts_populations(mongodb):
+        print 'state: %s city: %s pop: %.2f' % \
+            (d["_id"]["state"], d["_id"]["city"], d["popTotal"])
+    print "\n"
 
     print 'd) City Count and Total Population per State by Map/Reduce:'
     for r in state_pop_city_count_map_reduce(mongodb):
