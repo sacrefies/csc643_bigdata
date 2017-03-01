@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
+# Copyright 2017 team1@course_bigdata, Saint Joseph's University
+#
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
@@ -12,8 +14,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-#
-# Copyright 2017 Jason Qiao Meng, Sarah Cooney, Mingyuan Li
+
 
 # Description of this module
 __doc__ = """queries.py holds multiple queries to MongoDB
@@ -51,7 +52,6 @@ def list_states_cities_populations(mongodb):
         array.append(temp)
     return array
 
-
 def list_massachusetts_populations(mongodb):
     """This query function returns the list the cities in the state of Massachusetts with populations between 1000 and 2000."""
     db = mongodb.get_database()
@@ -71,7 +71,6 @@ def least_populated_state(mongodb):
     result = collection.map_reduce(mapper, reducer, "theResult")
     rs = result.find().sort('value', 1).limit(1)
     return {rs[0]['_id']:rs[0]['value']}
-
 
 def average_state_population_with_map_reduce(mongodb):
     """A mapReducer to compute the average population in each state."""
