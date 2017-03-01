@@ -61,7 +61,7 @@ def list_massachusetts_populations(mongodb):
 def least_populated_state(mongodb):
     """A mapReducer to find the least densely-populated state(s)."""
     db = mongodb.get_database()
-    collection = db[COLLECTION]  
+    collection = db[COLLECTION]
     mapper = Code("""
 	             function() { emit(this.state, this.pop); };
              """)
@@ -73,26 +73,6 @@ def least_populated_state(mongodb):
     return {rs[0]['_id']:rs[0]['value']}
 
 
-def total_cities_with_map_reduce(mongodb): #EXTRA Query 
-    """A mapReducer to compute the total number of cities"""
-
-    db = mongodb.get_database()
-    col = db[COLLECTION]
-    mapper = Code('function() {emit(this.city, 1);}')
-    reducer = Code('function(key, values) {return Array.sum(values);}')
-    rs = col.map_reduce(mapper, reducer, 'city_counts')
-    return rs.find().count()
-
-
-def state_population_with_map_reduce(mongodb): #Extra Query 
-    """A mapReducer to compute total population in each state."""
-    db = mongodb.get_database()
-    col = db[COLLECTION]
-    mapper = Code('function() {emit(this.state, this.pop);}')
-    reducer = Code('function(key, values) {return Array.sum(values);}')
-    rs = col.map_reduce(mapper, reducer, 'state_pops')
-    return rs.find()
-
 def average_state_population_with_map_reduce(mongodb):
     """A mapReducer to compute the average population in each state."""
     db = mongodb.get_database()
@@ -103,42 +83,60 @@ def average_state_population_with_map_reduce(mongodb):
     result = collection.map_reduce(mapper, reducer, 'state_avgs', finalize=finalizer)
     return result.find()
 
-def state_pop_city_count(mongodb):
+def state_pop_city_count_map_reduce(mongodb):
+    """A mapReducer to compute the total number of cities and total population in each state."""
     db = mongodb.get_database()
     collection = db[COLLECTION]
-    mapper = Code('function() {for(var i = 0; i < this._id.length; i++) { var key = this.state; var value = { count: 1, pop: this.pop}; emit(key, value);} }')
-    reducer = Code('function(key, values) {reduceval = {count: 0, pop: 0}; for(var i=0; i < values.length; i++) {reduceval.count += values[i].count; reduceval.pop += values[i].pop; } return reduceval; }')
-    result = collection.map_reduce(mapper, reducer, 'state_counts')
+    mapper = Code("""
+        function() {
+            emit(this.state, {city: [this.city], pop: this.pop});
+        };""")
+    reducer = Code("""
+        function(key, values) {
+            var res = {city: [], pop: 0};
+            for (var i = 0; i < values.length; ++i) {
+                var val = values[i];
+                res.pop += val.pop;
+                res.city = res.city.concat(val.city);
+            }
+            // remove duplicates
+            res.city = res.city.filter((elem, index) =>  res.city.indexOf(elem) === index);
+            return res;
+        }""")
+    finalizer = Code("""
+        function(key, reducedValue) {
+            reducedValue.cityCount = reducedValue.city.length;
+            return reducedValue;
+        }""")
+    result = collection.map_reduce(mapper, reducer, 'state_counts', finalize=finalizer)
     return result.find()
 
 # runner
 if __name__ == '__main__':
     # run the queries one by one
-    print ':::::::: BigData Course Project 1: Queries to MongoDB ::::::::'
+    print ':::::::: BigData Course Project 1: Queries to MongoDB ::::::::\n'
     mongodb = MongoDB()
     # insert query function invocations here
-    print "Total Cities:", total_cities(mongodb)
+    print "a) Total Cities:", total_cities(mongodb), "\n"
 
-    print "States_Cities_Popuplations:", list_states_cities_populations(mongodb)
+    #print "b) States_Cities_Popuplations:", list_states_cities_populations(mongodb)
 
-    print "list_massachusetts_populations", list_massachusetts_populations(mongodb)
+    #print "c) list_massachusetts_populations", list_massachusetts_populations(mongodb)
 
-    print "Least Populus State:",
-    for (k, v) in least_populated_state(mongodb).items():
-        print k, ':', v
+    print 'd) City Count and Total Population per State by Map/Reduce:'
+    for r in state_pop_city_count_map_reduce(mongodb):
+	    print r['_id'], ': (city count: ', r['value']['cityCount'], ', population: ', r['value']['pop'], ')'
+    print "\n"
 
-    print 'Total Cities by Map/Reduce: ', total_cities_with_map_reduce(mongodb)
-
-    print 'Total Populations for Each State by Map/Reduce: '
-    for r in state_population_with_map_reduce(mongodb):
-        print r['_id'], ':', r['value']
-
-    print 'Average Population for Each State with MapReduce:'
+    print 'e) Average Population for Each State with MapReduce:'
     for r in average_state_population_with_map_reduce(mongodb):
 	    print r['_id'], ':', r['value']['avg']
+    print "\n"
 
-    print 'City Count and Total Population per State:'
-    for r in state_pop_city_count(mongodb):
-	    print r['_id'], ':', r['value']['count'], ':', r['value']['pop']
+    print "f) Least Populus State by Map/Reduce:",
+    for (k, v) in least_populated_state(mongodb).items():
+        print k, ':', v
+    print "\n"
+
     mongodb.close()
     print ':::::::: Project 1 Run Ends ::::::::'
