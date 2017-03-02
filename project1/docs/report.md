@@ -61,9 +61,7 @@ limitations under the License.
     - [Run the Queries](#run-the-queries)
         - [Prerequisites](#prerequisites)
         - [Set Up](#set-up)
-- [database related](#database-related)
         - [Begin Running the Queries](#begin-running-the-queries)
-- [python queries.py](#python-queriespy)
     - [References](#references)
     - [About Team 1](#about-team-1)
 
