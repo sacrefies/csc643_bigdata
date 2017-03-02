@@ -46,22 +46,26 @@ limitations under the License.
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
 - [Project 1: MongoDB](#project-1-mongodb)
-	- [Table of Content](#table-of-content)
-	- [Introduction](#introduction)
-	- [Implementation](#implementation)
-		- [Database Connection](#database-connection)
-		- [Global Settings](#global-settings)
-		- [NOSQL Queries](#nosql-queries)
-			- [Query A](#query-a)
-			- [Query B](#query-b)
-			- [Query C](#query-c)
-	- [Installation](#installation)
-		- [Requirement](#requirement)
-	- [Run the Queries](#run-the-queries)
-		- [Set Up](#set-up)
-		- [Begin Running the Queries](#begin-running-the-queries)
-	- [References](#references)
-	- [About Team 1](#about-team-1)
+    - [Table of Content](#table-of-content)
+    - [Introduction](#introduction)
+    - [Implementation](#implementation)
+        - [Database Connection](#database-connection)
+        - [Global Settings](#global-settings)
+        - [NOSQL Queries](#nosql-queries)
+            - [Query A](#query-a)
+            - [Query B](#query-b)
+            - [Query C](#query-c)
+            - [Query D](#query-d)
+            - [Query E](#query-e)
+            - [Query F](#query-f)
+    - [Run the Queries](#run-the-queries)
+        - [Prerequisites](#prerequisites)
+        - [Set Up](#set-up)
+- [database related](#database-related)
+        - [Begin Running the Queries](#begin-running-the-queries)
+- [python queries.py](#python-queriespy)
+    - [References](#references)
+    - [About Team 1](#about-team-1)
 
 <!-- /TOC -->
 
@@ -179,12 +183,11 @@ This section will describe the setup of the queries.py file and give details abo
 The `queries.py` file contains a function for each of the six queries and a main section that runs all six queries in succession.
 
 The queries are:
-+ *Query A*: Find the total number of cities in the database.
-+ *Query B*: Create the list of states, cities, and city populations.
-+ *Query C*: List the cities in the state of Massachusetts with populations between 1000 and 2000.
-+ *Query D*: A mapReducer to compute the total number of cities and total population in each state.
-+ *Query E*: A mapReducer to find the average city population for each state.
-+ *Query F*: A mapReducer to find the least densely-populated state(s).
++ [x] *Query A*: Find the total number of cities in the database.
++ [x] *Query C*: List the cities in the state of Massachusetts with populations between 1000 and 2000.
++ [x] *Query D*: A mapReducer to compute the total number of cities and total population in each state.
++ [x] *Query E*: A mapReducer to find the average city population for each state.
++ [x] *Query F*: A mapReducer to find the least densely-populated state(s).
 
 #### Query A
 Query A: Find the total number of cities in the database.
@@ -200,6 +203,7 @@ def total_cities(mongodb):
 *Figure 5: Query A implementation*
 
 ![Query A result](../screenshots/query_a_total_cities.png)
+
 *Figure 6: Query A output*
 
 Shown by Figure 7, the actual MongoDB client command and output are:
@@ -234,6 +238,7 @@ def list_states_cities_populations(mongodb):
 *Figure 8: Query B implementation*
 
 ![Query B result](../screenshots/query_b_population_city_state.png)
+
 *Figure 9: Query B output*
 
 Shown by Figure 10, the actual MongoDB client command and sample output are:
@@ -293,7 +298,8 @@ def list_massachusetts_populations(mongodb):
 ```
 *Figure 11: Query C implementation*
 
-![Query B result](../screenshots/query_c_pop_in_MA_cities_1000_2000.png)
+![Query C result](../screenshots/query_c_pop_in_MA_cities_1000_2000.png)
+
 *Figure 12: Query C output*
 
 Shown by Figure 13, the actual MongoDB client command and sample output are:
@@ -326,18 +332,291 @@ Shown by Figure 13, the actual MongoDB client command and sample output are:
 { "_id" : { "state" : "MA", "city" : "SHUTESBURY" }, "popTotal" : 1533 }
 Type "it" for more
 ```
-*Figure 10: Query B by MongoDB client command*
+*Figure 13: Query C by MongoDB client command*
 
-## Installation
+#### Query D
+Query D: Write a mapReducer to compute the total number of cities and total population in each state.
 
-### Requirement
+Because the documents are identified by the zipcodes, the city names can be duplicate in the database. This query must be able to filter out the duplicated city names in a state, and count the distinct cities.
+
+The mapper for this function emits a list of city for the reducer to merge different cities to get a list of distinct cities. The reducer looped through the emitted values and aggregated the population on the state key, formed a list of distinct cities. The finalizer did the last step - got the length of the city list in the reduced value, such length is the count of cities for each state.
+
+Figure 14 contains the code for query D, and Figure 15 a sample of the output.
+
+```python
+def state_pop_city_count_map_reduce(mongodb):
+    """A mapReducer to compute the total number of cities and total population in each state."""
+    db = mongodb.get_database()
+    collection = db[COLLECTION]
+    mapper = Code("""
+        function() {
+            emit(this.state, {city: [this.city], pop: this.pop});
+        };""")
+    reducer = Code("""
+        function(key, values) {
+            var res = {city: [], pop: 0};
+            for (var i = 0; i < values.length; ++i) {
+                var val = values[i];
+                res.pop += val.pop;
+                res.city = res.city.concat(val.city);
+            }
+            // remove duplicates
+            res.city = res.city.filter((elem, index) =>  res.city.indexOf(elem) === index);
+            return res;
+        }""")
+    finalizer = Code("""
+        function(key, reducedValue) {
+            reducedValue.cityCount = reducedValue.city.length;
+            return reducedValue;
+        }""")
+    result = collection.map_reduce(
+        mapper, reducer, 'state_counts', finalize=finalizer)
+    return result.find()
+```
+*Figure 14: Query D implementation*
+
+![Query D result](../screenshots/query_d_map_reduce_city_count_pop_by_state.png)
+
+*Figure 15: Query D output*
+
+Shown by Figure 16, the actual MongoDB client command and sample output are:
+```javascript
+> var map = function() {
+...     emit(this.state, {city: [this.city], pop: this.pop});
+... };
+>
+> var reducer = function(key, values) {
+...     var res = {city: [], pop: 0};
+...     for (var i = 0; i < values.length; ++i) {
+...         var val = values[i];
+...         res.pop += val.pop;
+...         res.city = res.city.concat(val.city);
+...     }
+...     res.city = res.city.filter((elem, index) =>  res.city.indexOf(elem) === index);
+...     return res;
+... };
+>
+>
+> var finalizer = function(key, reducedValue) {
+...     reducedValue.cityCount = reducedValue.city.length;
+...     return reducedValue;
+... };
+>
+> var r = z.mapReduce(map, reducer, {out: "state_pop_city_count", finalize:finalizer});
+> var cur = r.find();
+> while (cur.hasNext()) {
+... var doc = cur.next();
+... print(doc._id, ": (pop:", doc.value.pop, ", cityCount:", doc.value.cityCount, ")");
+... };
+AK : (pop: 544698 , cityCount: 183 )
+AL : (pop: 4040587 , cityCount: 511 )
+AR : (pop: 2350725 , cityCount: 563 )
+AZ : (pop: 3665228 , cityCount: 178 )
+CA : (pop: 29754890 , cityCount: 1072 )
+CO : (pop: 3293755 , cityCount: 330 )
+CT : (pop: 3287116 , cityCount: 224 )
+DC : (pop: 606900 , cityCount: 2 )
+DE : (pop: 666168 , cityCount: 46 )
+FL : (pop: 12686644 , cityCount: 463 )
+GA : (pop: 6478216 , cityCount: 561 )
+HI : (pop: 1108229 , cityCount: 70 )
+IA : (pop: 2776420 , cityCount: 889 )
+ID : (pop: 1006749 , cityCount: 233 )
+IL : (pop: 11427576 , cityCount: 1148 )
+IN : (pop: 5544136 , cityCount: 598 )
+KS : (pop: 2475285 , cityCount: 648 )
+KY : (pop: 3675484 , cityCount: 771 )
+LA : (pop: 4217595 , cityCount: 403 )
+MA : (pop: 6016425 , cityCount: 405 )
+MD : (pop: 4781379 , cityCount: 379 )
+ME : (pop: 1226648 , cityCount: 408 )
+MI : (pop: 9295297 , cityCount: 769 )
+MN : (pop: 4372982 , cityCount: 814 )
+MO : (pop: 5110648 , cityCount: 901 )
+```
+*Figure 16: Query D by MongoDB client command*
+
+#### Query E
+Query E: Write a mapReducer to find the average city population for each state.
+
+This query is built from the code for Query D.  It uses the same mapper and reducer.  However, a finalize method is added to compute the average from the number of cities and the total population for each state.
+
+A sample of the code for query E is shown in Figure 17, and sample output is shown in Figure 18.
+
+```python
+def average_state_population_with_map_reduce(mongodb):
+    """A mapReducer to compute the average population in each state."""
+    db = mongodb.get_database()
+    collection = db[COLLECTION]
+    mapper = Code("""
+        function() {
+            emit(this.state, {city: [this.city], pop: this.pop});
+        }""")
+    reducer = Code("""
+        function(key, values) {
+            var res = {city: [], pop: 0};
+            for (var i = 0; i < values.length; ++i) {
+                var val = values[i];
+                res.pop += val.pop;
+                res.city = res.city.concat(val.city);
+            }
+            res.city = res.city.filter((elem, index) =>  res.city.indexOf(elem) === index);
+            return res;
+        }""")
+    finalizer = Code("""
+        function(key, reducedValue) {
+            reducedValue.cityCount = reducedValue.city.length;
+            reducedValue.avgPop = reducedValue.pop / reducedValue.cityCount;
+            return reducedValue;
+        }""")
+    result = collection.map_reduce(
+        mapper, reducer, 'state_avgs', finalize=finalizer)
+    return result.find()
+```
+*Figure 17: Query E implementation*
+
+![Query E result](../screenshots/query_e_avg_city_pop_by_state.png)
+
+*Figure 18: Query E output*
+
+Shown by Figure 19, the actual MongoDB client command and sample output are:
+```javascript
+> var map = function() {
+...     emit(this.state, {city: [this.city], pop: this.pop});
+... };
+>
+> var reducer = function(key, values) {
+...     var res = {city: [], pop: 0};
+...     for (var i = 0; i < values.length; ++i) {
+...         var val = values[i];
+...         res.pop += val.pop;
+...         res.city = res.city.concat(val.city);
+...     }
+...     res.city = res.city.filter((elem, index) =>  res.city.indexOf(elem) === index);
+...     return res;
+... };
+>
+>
+> var finalizer = function(key, reducedValue) {
+...     reducedValue.cityCount = reducedValue.city.length;
+...     reducedValue.avgPop = reducedValue.pop / reducedValue.cityCount;
+...     return reducedValue;
+... };
+> var r = z.mapReduce(map, reducer, {out: "state_avg_pop", finalize:finalizer});
+> var cur = r.find();
+> while (cur.hasNext()) {
+... var doc = cur.next();
+... print(doc._id, ": (pop:", doc.value.pop, ", cityCount:", doc.value.cityCount, ", avgPop:", doc.value.avgPop, ")");
+... };
+AK : (pop: 544698 , cityCount: 183 , avgPop: 2976.4918032786886 )
+AL : (pop: 4040587 , cityCount: 511 , avgPop: 7907.2152641878665 )
+AR : (pop: 2350725 , cityCount: 563 , avgPop: 4175.355239786856 )
+AZ : (pop: 3665228 , cityCount: 178 , avgPop: 20591.16853932584 )
+CA : (pop: 29754890 , cityCount: 1072 , avgPop: 27756.42723880597 )
+CO : (pop: 3293755 , cityCount: 330 , avgPop: 9981.075757575758 )
+CT : (pop: 3287116 , cityCount: 224 , avgPop: 14674.625 )
+DC : (pop: 606900 , cityCount: 2 , avgPop: 303450 )
+DE : (pop: 666168 , cityCount: 46 , avgPop: 14481.91304347826 )
+FL : (pop: 12686644 , cityCount: 463 , avgPop: 27400.958963282937 )
+GA : (pop: 6478216 , cityCount: 561 , avgPop: 11547.62210338681 )
+HI : (pop: 1108229 , cityCount: 70 , avgPop: 15831.842857142858 )
+IA : (pop: 2776420 , cityCount: 889 , avgPop: 3123.0821147356583 )
+ID : (pop: 1006749 , cityCount: 233 , avgPop: 4320.811158798283 )
+```
+*Figure 19: Query E by MongoDB client command*
+
+#### Query F
+Query F: Write a mapReducer to find the least densely-populated state(s).
+
+The mapper for this query emits the state as a key and population as the value for each piece of data.
+
+The reducer then sums the population for each key (state). The reducer returns a collection containing the fields state and total population as key and value, respectively.
+
+The find command is then used on this collection in conjunction with the sort command, which is run on the population totals, and returned in ascending order. The results of the find are then limited to one, which is the state with the smallest population.
+
+The code for query F is in Figure 20, and Figure 21 displays the output.
+
+```python
+def least_populated_state(mongodb):
+    """A mapReducer to find the least densely-populated state(s)."""
+    db = mongodb.get_database()
+    collection = db[COLLECTION]
+    mapper = Code("""
+                 function() { emit(this.state, this.pop); };
+             """)
+    reducer = Code("""
+                  function(state, pop) { return Array.sum(pop); };
+                """)
+    result = collection.map_reduce(mapper, reducer, "theResult")
+    rs = result.find().sort('value', 1).limit(1)
+    return {rs[0]['_id']: rs[0]['value']}
+```
+*Figure 20: Query F implementation*
+
+![Query F result](../screenshots/query_f_least_pop_state.png)
+
+*Figure 21: Query F output*
+
+Shown by Figure 22, the actual MongoDB client command and sample output are:
+```javascript
+> var map = function() { emit(this.state, this.pop); };
+> var reducer = function(state, pop) { return Array.sum(pop); };
+> var r = z.mapReduce(map, reducer, {out: "state_pop"});
+> r.find().sort({value: 1}).limit(1);
+{ "_id" : "WY", "value" : 453528 }
+```
+*Figure 22: Query F by MongoDB client command*
 
 ## Run the Queries
+Both the Python implementations and the MongoDB client script are not platform dependant. They are compatible with POSIX/Darwin and WIN32 platforms.
+
+However, there are some prerequisites are needed before the run.
+
+### Prerequisites
+To be able to run the queries, the following steps must be done beforehand:
+- [x] Install and run MongoDB server instance properly
+- [x] Install Python2.7 runtime
+- [x] Install pymongo and its dependancies
+- [x] MongoDB command-line client is running and its interactive environment is launched and ready
 
 ### Set Up
+There are some configuration steps also needs to be done.
+
+- [x] Import the data from `zipcodes.json` to your MongoDB server instance
+- [x] Use any text editor open up `settings.py` and set appropriate values to the below variables:
+```python
+# database related
+DB_NAME = "zipcodes"
+DB_PROTOCOL = "mongodb://"
+DB_HOST = "localhost"
+DB_PORT = "27017"
+COLLECTION = "zipcodes"
+```
 
 ### Begin Running the Queries
+Launch a terminal or a CMD, change the current directory to the project's `src` subdirectory.
+
+Type in the following command:
+```bash
+# python queries.py
+```
 
 ## References
++ [MongoDB CRUD Operations][e649dbe8]
+
+  [e649dbe8]: https://docs.mongodb.com/manual/crud/ "MongoDB CRUD Operations"
++ [MongoDB Aggregation][09e1cf77]
+
+  [09e1cf77]: https://docs.mongodb.com/manual/aggregation/ "MongoDB Aggregation"
++ [Pymongo - Collection level operations][fa628a3d]
+
+  [fa628a3d]: http://api.mongodb.com/python/current/api/pymongo/collection.html "Pymongo - Collection level operations"
++ [Aggregation Examples][842c56f4]
+
+  [842c56f4]: http://api.mongodb.com/python/current/examples/aggregation.html "Aggregation Examples"
 
 ## About Team 1
+Team 1 consists of three students, who are:
++ Jason Qiao Meng *(Team Lead)*
++ Sarah Cooney *(Developer)*
++ Mingyuan Li *(Developer)*
