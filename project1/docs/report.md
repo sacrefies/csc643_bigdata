@@ -14,38 +14,50 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-Project 1: MongoDB
-==================
-***Team 1***
+
+# Project 1: MongoDB
+*This project is developed by* ***Team 1***:
 * Sarah Cooney
 * Mingyuan Li
 * Jason Qiao Meng
 
+<div class="page-break"></div>
+
+## Table of Content
+<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+- [Project 1: MongoDB](#project-1-mongodb)
+	- [Table of Content](#table-of-content)
+	- [Introduction](#introduction)
+	- [Implementation](#implementation)
+	- [Installation](#installation)
+		- [Requirement](#requirement)
+	- [Run the Queries](#run-the-queries)
+		- [Set Up](#set-up)
+		- [Begin Running the Queries](#begin-running-the-queries)
+	- [References](#references)
+	- [About Team 1](#about-team-1)
+
+<!-- /TOC -->
 
 
+## Introduction
+*A MongoDB client script and a Python program which runs experimental `NOSQL` queries.*
 
-
-Introduction
----
 This project is a course project of **CSC643 - Bigdata**.
 
-Implementation
----
+## Implementation
 
-Installation
----
+## Installation
 
 ### Requirement
 
-Run the Queries
----
+## Run the Queries
 
 ### Set Up
 
 ### Begin Running the Queries
 
-References
----
+## References
 
-About Team 1
----
+## About Team 1
