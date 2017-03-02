@@ -35,13 +35,33 @@ from settings import COLLECTION
 from bson.son import SON
 
 
-def total_cities(mongodb):
+def connect_mongodb(func):
+    """A decorator for the query function to take care of the database connection.
+
+    :param func:    The function object to decorate
+    :return:    A wrapper function which decorates func.
+    """
+    def wrapper(*args, **kwargs):
+        """The wrapper function for the function to be decorated.
+        This function will call the decorated with the parameters.
+        """
+        mongodb = args[0] if args and args[0] else MongoDB()
+        rs = func(mongodb)
+        mongodb.close()
+        return rs
+
+    return wrapper
+
+
+@connect_mongodb
+def total_cities(mongodb = None):
     """This query function returns the total number of cities in the database."""
     db = mongodb.get_database()
     return len(db[COLLECTION].distinct('city'))
 
 
-def list_states_cities_populations(mongodb):
+@connect_mongodb
+def list_states_cities_populations(mongodb = None):
     """This query function returns the list of states, cities, populations in the database."""
     db = mongodb.get_database()
     collection = db[COLLECTION]
@@ -56,7 +76,8 @@ def list_states_cities_populations(mongodb):
     return collection.aggregate(pipline)
 
 
-def list_massachusetts_populations(mongodb):
+@connect_mongodb
+def list_massachusetts_populations(mongodb = None):
     """This query function returns the list the cities in the state of Massachusetts with populations between 1000 and 2000."""
     db = mongodb.get_database()
     collection = db[COLLECTION]
@@ -72,7 +93,8 @@ def list_massachusetts_populations(mongodb):
     return collection.aggregate(pipline)
 
 
-def least_populated_state(mongodb):
+@connect_mongodb
+def least_populated_state(mongodb = None):
     """A mapReducer to find the least densely-populated state(s)."""
     db = mongodb.get_database()
     collection = db[COLLECTION]
@@ -87,7 +109,8 @@ def least_populated_state(mongodb):
     return {rs[0]['_id']: rs[0]['value']}
 
 
-def average_state_population_with_map_reduce(mongodb):
+@connect_mongodb
+def average_state_population_with_map_reduce(mongodb = None):
     """A mapReducer to compute the average population in each state."""
     db = mongodb.get_database()
     collection = db[COLLECTION]
@@ -117,7 +140,8 @@ def average_state_population_with_map_reduce(mongodb):
     return result.find()
 
 
-def state_pop_city_count_map_reduce(mongodb):
+@connect_mongodb
+def state_pop_city_count_map_reduce(mongodb = None):
     """A mapReducer to compute the total number of cities and total population in each state."""
     db = mongodb.get_database()
     collection = db[COLLECTION]
@@ -150,37 +174,37 @@ def state_pop_city_count_map_reduce(mongodb):
 if __name__ == '__main__':
     # run the queries one by one
     print ':::::::: BigData Course Project 1: Queries to MongoDB ::::::::\n'
-    mongodb = MongoDB()
+    #mongodb = MongoDB()
     # insert query function invocations here
-    print "a) Total Cities:", total_cities(mongodb), "\n"
+    print "a) Total Cities:", total_cities(), "\n"
 
     print "b) States_Cities_Popuplations:"
-    for d in list_states_cities_populations(mongodb):
+    for d in list_states_cities_populations():
         print 'state: %s city: %s pop: %.2f' % \
             (d["_id"]["state"], d["_id"]["city"], d["popTotal"])
     print "\n"
 
     print "c) list_massachusetts_populations"
-    for d in list_massachusetts_populations(mongodb):
+    for d in list_massachusetts_populations():
         print 'state: %s city: %s pop: %.2f' % \
             (d["_id"]["state"], d["_id"]["city"], d["popTotal"])
     print "\n"
 
     print 'd) City Count and Total Population per State by Map/Reduce:'
-    for r in state_pop_city_count_map_reduce(mongodb):
+    for r in state_pop_city_count_map_reduce():
 	    print r['_id'], ': (city cnt: ', r['value']['cityCount'], ', total pop: ', r['value']['pop'], ')'
     print "\n"
 
     print 'e) Average Population for Each State with MapReduce:'
-    for r in average_state_population_with_map_reduce(mongodb):
+    for r in average_state_population_with_map_reduce():
 	    print '%s: (city cnt: %d, total pop: %d, avg pop: %.2f)' % \
             (r['_id'], r['value']['cityCount'], r['value']['pop'], r['value']['avgPop'])
     print "\n"
 
     print "f) Least Populus State by Map/Reduce:",
-    for (k, v) in least_populated_state(mongodb).items():
+    for (k, v) in least_populated_state().items():
         print k, ':', v
     print "\n"
 
-    mongodb.close()
+    #mongodb.close()
     print ':::::::: Project 1 Run Ends ::::::::'
