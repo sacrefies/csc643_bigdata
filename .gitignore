@@ -213,7 +213,11 @@ FakesAssemblies/
 # Visual Studio 6 workspace options file
 *.opt
 
-# LightSwitch generated files
-GeneratedArtifacts/
-_Pvt_Extensions/
-ModelManifest.xml
+# archive files
+*.zip
+*.7z
+*.rar
+*.ar
+*.arh
+*.tar
+*.gz
