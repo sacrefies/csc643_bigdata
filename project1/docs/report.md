@@ -14,27 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-
 # Project 1: MongoDB
-
-
 *This project is developed by* ***Team 1***:
 * Sarah Cooney
 * Mingyuan Li
@@ -66,10 +46,6 @@ limitations under the License.
     - [About Team 1](#about-team-1)
 
 <!-- /TOC -->
-
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
 
 ## Introduction
 This project is a course project of **CSC643 - Bigdata**. It is about a MongoDB client script and a Python program which runs experimental `NOSQL` queries.
@@ -303,7 +279,7 @@ def list_massachusetts_populations(mongodb):
 Shown by Figure 13, the actual MongoDB client command and sample output are:
 ```javascript
 > db.zipcodes.aggregate([
-... {$match: {$and: [{state: "MA"}, {pop: {$gte: 1000, $lte: 2000}}]}},
+... {$match: {$and: [{state: "MA"}, {popTotal: {$gte: 1000, $lte: 2000}}]}},
 ... {$group: {
         _id: {"state": "$state", "city": "$city"},
 ...     popTotal: {$sum: "$pop"}}},
