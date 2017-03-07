@@ -3,20 +3,20 @@ This project is an excise to use [Google BigQuery][goog_bigquery] and [Google Ap
 
 This project is developed in `Python 2.7.x` and utilizes [WebApp 2][webapp2] as the web application framwork which is supported by [Google App Engine][goog_python_app_engine].
 
-# Run the Project Web App
+# Running the Web App
 
 ## with Google App Engine
 
 ### Configuration
 
-### Launch
+### Launching
 
 
 ## With Apache2 Server
 
 ### Configuration
 
-### Launch
+### Launching
 
 <!-- Reference links -->
 [goog_bigquery]: https://cloud.google.com/bigquery/docs/  "Google BigQuery Documentation"
