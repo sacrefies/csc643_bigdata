@@ -221,3 +221,6 @@ FakesAssemblies/
 *.arh
 *.tar
 *.gz
+
+# idea related
+.idea/
