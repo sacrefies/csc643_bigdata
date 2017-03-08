@@ -15,37 +15,61 @@
 # limitations under the License.
 #
 
+# built-in libs
+import os
+# webapp related libs
+import webapp2
+import paste.cascade as cascade
+import paste.urlparser as paste_urlparser
+# project includes
+from settings import TEMPLATE_ENV
+
+
 __doc__ = """Main entrance of this web app which plays as an 'index.html'
 like in good old days.
 """
 
-import os
 
-import webapp2
-from google.appengine.ext.webapp import template
+class TestMain(webapp2.RequestHandler):
+    """This class is for testing.
+    It behaves like an alternative site homepage.
 
-from urls import ROUTES
+    To Run
+    ------
+    $ python test.py
+    """
 
-
-class MainHandler(webapp2.RequestHandler):
     def get(self):
-        # self.response.write('Hello world!')
+        """Response to a client http request
+        """
         objects = os.listdir(os.curdir)
+        # values to be bound to the template
         temp_vals = {
             'headline': 'Objects under the Current Folder',
             'objects': objects
         }
-        path = os.path.join(os.path.dirname(__file__), 'index.html')
+        template = TEMPLATE_ENV.get_template(r'test_general.html')
         self.response.headers['Content-Type'] = 'text/html'
-        self.response.out.write(template.render(path, temp_vals))
+        self.response.out.write(template.render(temp_vals))
 
 
-app = webapp2.WSGIApplication(ROUTES, debug=True)
+app = webapp2.WSGIApplication(
+    routes=[
+        (r'/', TestMain),
+    ],
+    debug=True)
+
+css_app = paste_urlparser.StaticURLParser('css/')
+js_app = paste_urlparser.StaticURLParser('js/')
+fonts_app = paste_urlparser.StaticURLParser('fonts/')
+
+test_app = cascade.Cascade([css_app, app])
 
 
 def main():
+    print css_app.__repr__()
     from paste import httpserver
-    httpserver.serve(app, host='127.0.0.1', port='8080')
+    httpserver.serve(test_app, host='127.0.0.1', port='8080')
 
 
 # sanity test

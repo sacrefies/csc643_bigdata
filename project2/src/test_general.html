@@ -16,12 +16,12 @@ limitations under the License.
 
 {% include "header.html" %}
 <div class="page-header">
-  <h1>{% headline %}</h1>
+  <h1>{{ headline }}</h1>
 </div>
 <!-- list objects: a simple attempt to list the objects under the current directory -->
 <table class="table-bordered">
     {% for obj in objects %}
-      <tr><td>{% obj %}</td></tr>
+      <tr><td>{{ obj }}</td></tr>
     {% endfor %}
 </table>
 <!-- list objects ends -->
