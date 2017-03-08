@@ -16,16 +16,19 @@
 #
 
 import os
+# this lib is only for local testing using Paste HTTP server
 import jinja2
 
 __doc__ = """This file is the base configuration which keeps the CONSTANTS."""
 
 # The source connection string for Hacker News
-GOOG_HACKER_NEWS_SOURCE = r''
+GOOG_HACKER_NEWS_SOURCE = r'hacker_news'
+GOOG_PUBLIC_DATA_PROJ_ID = r'bigquery-public-data'
 # The google service secret variable name
 GOOG_CREDENTIALS_ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS'
 
 # To use the template framework, this global constant must be set.
+#  - this variable is only for local testing using Paste HTTP server
 TEMPLATE_ENV = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     extensions=['jinja2.ext.autoescape'],

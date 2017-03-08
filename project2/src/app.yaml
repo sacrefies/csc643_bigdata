@@ -19,10 +19,10 @@ handlers:
   static_dir: fonts
 
 - url: /.*
-  script: test.app
+  script: main.app
 
 libraries:
 - name: webapp2
   version: "2.5.2"
 - name: jinja2
-  version: "2.9.5"
+  version: "2.6"
