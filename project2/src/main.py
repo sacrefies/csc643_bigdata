@@ -15,39 +15,11 @@
 # limitations under the License.
 #
 
-__doc__ = """Main entrance of this web app which plays as an 'index.html'
-like in good old days.
-"""
-
-import os
-
+# google/webapp2 libs
 import webapp2
-from google.appengine.ext.webapp import template
-
+# project home brew
 from urls import ROUTES
 
 
-class MainHandler(webapp2.RequestHandler):
-    def get(self):
-        # self.response.write('Hello world!')
-        objects = os.listdir(os.curdir)
-        temp_vals = {
-            'headline': 'Objects under the Current Folder',
-            'objects': objects
-        }
-        path = os.path.join(os.path.dirname(__file__), 'index.html')
-        self.response.headers['Content-Type'] = 'text/html'
-        self.response.out.write(template.render(path, temp_vals))
-
-
+# The WSGI application object is defined here
 app = webapp2.WSGIApplication(ROUTES, debug=True)
-
-
-def main():
-    from paste import httpserver
-    httpserver.serve(app, host='127.0.0.1', port='8080')
-
-
-# sanity test
-if __name__ == '__main__':
-    main()

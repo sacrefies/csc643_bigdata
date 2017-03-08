@@ -15,8 +15,12 @@
 # limitations under the License.
 #
 
+__doc__ = """This module includes the variable for server side routes for the requests.
+"""
 
+
+# The server side redirection is defined here
 ROUTES = [
     # (route/path, handler class full name)
-    (r'/', 'main.MainHandler'),
+    (r'/', 'index.MainHandler'),
 ]

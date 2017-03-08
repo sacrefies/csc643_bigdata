@@ -17,10 +17,11 @@
 
 # built-in libs
 import os
-# webapp related libs
+# google/webapp2 libs
 import webapp2
-# project includes
-from settings import TEMPLATE_ENV
+from google.appengine.ext.webapp import template
+# project home brew
+from urls import ROUTES
 
 
 __doc__ = """Main entrance of this web app which plays as an 'index.html'
@@ -28,31 +29,20 @@ like in good old days.
 """
 
 
-class TestMain(webapp2.RequestHandler):
-    """This class is for testing.
-    It behaves like an alternative site homepage.
-
-    To Run
-    ------
-    $ python test.py
+class MainHandler(webapp2.RequestHandler):
+    """The site's front page handler class.
     """
 
     def get(self):
-        """Response to a client http request
+        """Respond to a client http request at '/'
+
+        :return: A server rendered HTML text stream.
         """
         objects = os.listdir(os.curdir)
-        # values to be bound to the template
         temp_vals = {
-            'headline': 'Objects under the Current Folder',
+            'headline': 'Hacker News ',
             'objects': objects
         }
-        template = TEMPLATE_ENV.get_template(r'test_general.html')
+        path = os.path.join(os.path.dirname(__file__), 'index.html')
         self.response.headers['Content-Type'] = 'text/html'
-        self.response.out.write(template.render(temp_vals))
-
-
-app = webapp2.WSGIApplication(
-    routes=[
-        (r'/', TestMain),
-    ],
-    debug=True)
+        self.response.out.write(template.render(path, temp_vals))
