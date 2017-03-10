@@ -15,59 +15,301 @@
 # limitations under the License.
 #
 
+
+"""This module includes a base class which wraps the Google Cloud BigQuery
+library.
+
+By using the class ``BigQuery``, the invoker can proceed with:
+    + Get a bigquery cloud service client
+    + Perform a synchronous query
+    + Perform an asynchronous query
+    + Get a dataset
+    + Create a dataset
+    + Create a table
+    + Auxiliary funcions:
+        + Construct SQL's parameters
+        + Construct table schema
+
+Example 1 - Create the project dataset::
+
+    from bigquery import BigQuery
+
+    bq = BigQuery()
+    ds = bq.get_dataset()
+    if not ds.exists():
+        ds = bq.create_dataset()
+
+Example 2 - Create a table::
+
+    from bigquery import BigQuery
+
+    bq = BigQuery()
+    bq.get_dataset()
+
+    cols = {
+        'name': 'STRING',
+        'Age': 'INTEGER',
+    }
+    schema = BigQuery.build_schema(cols)
+    t = bq.create_table('table_a', cols)
+
+Example 3 - Perform a query::
+
+    from bigquery import BigQuery
+
+    sql = \"""
+        SELECT word, word_count
+        FROM %s
+        WHERE corpus = @corpus
+        AND word_count >= @min_word_count
+        ORDER BY %s DESC;
+    \""" % ('`bigquery-public-data.samples.shakespeare`', 'word_count')
+
+    bq = BigQuery()
+    bq.get_client()
+    rs, total = bq.sync_query(sql,
+"""
+
+# built-in libs
+import time
+import uuid
 # google bigquery
 from google.cloud import bigquery
 # project home brews
-from settings import GOOG_PROJECT_ID, GOOG_DATASET_NAME
-
-
-__doc__ = """This module includes a base class which wraps the Google Cloud BigQuery
-library
-"""
+from settings import GOOG_PROJECT_ID, GOOG_DATASET_NAME, MAX_RESULT_COUNT
 
 
 class BigQuery(object):
     """A helper class to wrap up Google BigQuery library.
 
-    Usage
-    -----
-    bq = BigQuery()
-    # get a dataset handler under the default project
-    # the default project == settings.GOOG_PROJECT_ID
-    ds = bq.get_dataset('my_dataset')
-    # create the dataset
-    ds.create()
+    Usage::
+
+        bq = BigQuery()
+        # get a dataset handler under the default project
+        # the default project == settings.GOOG_PROJECT_ID
+        ds = bq.get_dataset('my_dataset')
+        # create the dataset
+        ds.create()
+        # do a query
+        rs, row_count = bq.sync_query(r'SELECT * FROM [bigquery-public-data:samples.gsod] LIMIT 10')
+        for row in rs:
+            print rs
     """
 
     def __init__(self, project=None):
         """Create and initialize an instance of class BigQuery.
 
         :param project: The name of the project. If omitted, settings.GOOG_PROJECT_ID is used by default.
+        :type project: str
         """
         self.__proj = project if project else GOOG_PROJECT_ID
-        self.__cli = bigquery.Client(self.__proj)
+        self.__cli = None
         self.__ds = None
 
-    def get_dataset(self, dataset=None):
+    def get_client(self):
+        """Get a client of the big query service.
+
+        :return: An instance of a client of bigquery service
+        :rtype: bigquery.Client
+        """
+        self.__cli = self.__cli if self.__cli else bigquery.Client(self.__proj)
+        return self.__cli
+
+    def get_dataset(self, name=None):
         """Get a dataset handler object.
 
         :param dataset: The name of the dataset. If omitted, settings.GOOG_DATASET_NAME is used by default.
-        :return: A bigquery.Dataset object instance
+        :type dataset: str
+        :return: An new instance of a Dataset.
+        :rtype: bigquery.Dataset
         """
-        self.__ds = self.__cli.dataset(dataset) if dataset else self.__ds \
-            if self.__ds else self.__cli.dataset(GOOG_DATASET_NAME)
+        self.get_client()
 
+        name = name if name else GOOG_DATASET_NAME
+        self.__ds = self.__ds if self.__ds and name == GOOG_DATASET_NAME else self.__cli.dataset(name)
+        if self.__ds.exists():
+            self.__ds.reload()
         return self.__ds
 
-    def get_table(self, table, dataset=None):
-        """Get a table handler object.
+    def create_dataset(self, name=None):
+        """Create a dataset.
 
-        :param dataset: The name of the dataset. If omitted, settings.GOOG_DATASET_NAME is used by default.
-        :param table: The table name
-        :return: A new instance of class bigquery.Table
+        :param name: The name of the dataset.
+        :type name: str
+        :return: Returns a dataset instance
+        :rtype: bigquery.Dataset
         """
-        if not table:
+        self.get_dataset(name)
+        if not self.__ds.exists():
+            self.__ds.create()
+            self.__ds.reload()
+        return self.__ds
+
+    def create_table(self, name, schema):
+        """Create a table with the specified schema.
+
+        :param name: The name of the table.
+        :type name: str
+        :param schema: The schema of the table. This schema can be built by the class function `build_schema()`.
+        :type schema: dict
+        :return: Return the table object that was created. Or return None if failed.
+        :rtype: bigquery.Table
+        """
+        if not name or not schema:
             return None
 
-        self.__ds = self.get_dataset(dataset)
-        return self.__ds.table(table)
+        self.get_dataset()
+        if not self.__ds.exists():
+            return None
+
+        t = self.__ds.table(name)
+        if t.exists():
+            return t
+        t.schema = schema
+        t.create()
+        return t
+
+    def sync_query(self, query, params=()):
+        """Perform a query and return the result and the total count of the affected rows.
+        To use the parameters, please refer to the example below::
+            query_parameters=(
+                bigquery.ScalarQueryParameter('corpus', 'STRING', corpus),
+                bigquery.ScalarQueryParameter(
+                    'min_word_count',
+                    'INT64',
+                    min_word_count))
+
+        :param query: A Standard SQL that Google BigQuery accepts.
+        :type query: str
+        :param params: The parameters that the query uses.
+        :type params: tuple
+        :return: Returns the result set (only values) and the total count of the affected rows.
+        :rtype: tuple
+        """
+        self.__cli = self.get_client()
+        query_results = self.__cli.run_sync_query(query, query_parameters=params)
+
+        # Use standard SQL syntax for queries.
+        # See: https://cloud.google.com/bigquery/sql-reference/
+        query_results.use_legacy_sql = False
+        query_results.run()
+
+        # get all possible rows
+        pt = None
+        rs = []
+        while True:
+            row_data, total_rows, page_token = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
+            rs += [row for row in row_data]
+            if not page_token:
+                break
+
+        return rs, total_rows
+
+    def async_query(self, query, params=()):
+        """Perform a query *asynchronously* and return the result and the total count of the affected rows.
+        To use the parameters, please refer to the example below::
+
+            params = {
+                'name': 'John',
+                'age': 21,
+                'married': False
+            }
+            converted_params = BigQuery.build_params(params)
+            sql = \"""
+                SELECT *
+                FROM %s
+                WHERE name = @name
+                AND   age = @age
+                AND   is_married = @married
+                LIMIT %d
+            \""" % ('`mydataset.sometable`', 10)
+            bq = BigQuery()
+            bq.get_client()
+            rs, total = bq.async_query(query, converted_params)
+
+        :param query: A Standard SQL that Google BigQuery accepts.
+        :type query: str
+        :param params: The parameters that the query uses.
+        :type params: tuple
+        :return: Returns the result set (only values) and the total count of the affected rows.
+        :rtype: tuple
+        """
+        self.__cli = self.get_client()
+        query_job = self.__cli.run_async_query(str(uuid.uuid4()), query, query_parameters=params)
+        query_job.use_legacy_sql = False
+        query_job.begin()
+        # wait for the job complete
+        BigQuery.__async_wait(query_job)
+
+        # Drain the query results by requesting a page at a time.
+        query_results = query_job.results()
+        rs = []
+        pt = None
+        while True:
+            row_data, total_rows, page_token = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
+            rs += [row for row in row_data]
+            if not page_token:
+                break
+
+        return rs, total_rows
+
+    @classmethod
+    def build_schema(cls, columns):
+        """Construct a table's schema.
+
+        Example::
+
+            cols = {
+                'name': 'STRING',
+                'Age': 'INTEGER',
+            }
+            schema = BigQuery.build_schema(cols)
+
+        :param columns: A dictionary which consists of {'name': 'BigQuery SQL type name'}
+        :type columns: dict
+        :return: Returns a tuple of schema objects.
+        :rtype: tuple
+        """
+        return None if not columns else tuple([bigquery.SchemaField(k, v) for k, v in columns.iteritems()])
+
+    @classmethod
+    def build_params(cls, params):
+        """Construct a tuple of the SQL parameters.
+
+        `Note: this function produce scalar parameters only.`
+
+        :param params: A ``python`` ``dict`` which holds the parameters
+                       in form of {'name': value} where the value can be any object.
+        :return: Returns a tuple of SQL parameter objects
+        :rtype: bigquery.ScalarQueryParameter
+        """
+        if not params:
+            return None
+
+        def get_type(k, v):
+            t = 'STRING'
+            if isinstance(v, int):
+                t = 'INTEGER'
+            elif isinstance(v, float):
+                t = 'FLOAT'
+            elif isinstance(v, bool):
+                t = 'BOOL'
+            return bigquery.ScalarQueryParameter(k, t, v)
+
+        return tuple([get_type(key, value) for key, value in params.iteritems()])
+
+    @classmethod
+    def __async_wait(cls, job):
+        """Wait for a job to be done.
+
+        :param job: A `QueryJob` instance
+        :type: bigquery.job.QueryJob
+        """
+        while True:
+            # Refreshes the state via a GET request.
+            job.reload()
+            if job.state == 'DONE':
+                if job.error_result:
+                    raise RuntimeError(job.errors)
+                return
+            time.sleep(0.05)

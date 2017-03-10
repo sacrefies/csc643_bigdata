@@ -15,9 +15,13 @@
 # limitations under the License.
 #
 
+"""This module includes helper functions for the big queries to Hacker News.
+Developers shall implement the query function here to separate such from the web controllers.
+The controllers shall be implemented in other modules/classes.
+"""
+
 # google bigquery
-from google.cloud import bigquery
-from google.cloud.bigquery import Dataset, Table
+
 # project home brews
 from settings import GOOG_PROJECT_ID, GOOG_DATASET_NAME
 from settings import \
@@ -25,36 +29,3 @@ from settings import \
     BEST_STORY_URL_AVG_TABLE_NAME, STORY_COUNT_PER_AUTHOR
 from bigquery import BigQuery
 
-__doc__ = """This module includes helper functions for the big queries to Hacker News.
-Developers shall implement the query function here to separate such from the web controllers.
-The controllers shall be implemented in other modules/classes.
-"""
-
-
-def __get_project_dataset():
-    """Get the project dataset defined by settings.GOOG_DATASET_NAME,
-     or create the dataset if it does not exist yet.
-
-    :return: The project dataset instance.
-    """
-    return None
-
-
-def __get_project_table(name, dataset):
-    """Get the desired table, or create it if it does not exist yet.
-
-    :param name: string The name of the table
-    :param dataset: An instance of the class bigquery.
-    :type name: str
-    :type dataset: Dataset
-    :return: Return an instance of class bigquery.Table
-    :rtype: Table
-    """
-    if not dataset or not name:
-        return None
-
-    t = dataset.table(name)
-    if not t.exists():
-        t.create()
-
-    return t

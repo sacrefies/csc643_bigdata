@@ -27,6 +27,12 @@ GOOG_PUBLIC_DATA_PROJ_ID = r'bigquery-public-data'
 # The google service secret variable name
 GOOG_CREDENTIALS_ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS'
 
+# The data table name
+STORY_COUNT_TABLE_NAME = 'table_a'
+LOWEST_SCORE_TABLE_NAME = 'table_b'
+BEST_STORY_URL_AVG_TABLE_NAME = 'table_c'
+STORY_COUNT_PER_AUTHOR = 'table_d'
+
 # To use the template framework, this global constant must be set.
 #  - this variable is only for local testing using Paste HTTP server
 TEMPLATE_ENV = jinja2.Environment(

@@ -27,8 +27,6 @@ GOOG_PROJECT_ID = r''
 GOOG_CREDENTIALS_FILE_PATH = r''
 # The dataset name
 GOOG_DATASET_NAME = r''
-# The data table name
-STORY_COUNT_TABLE_NAME = 'table_a'
-LOWEST_SCORE_TABLE_NAME = 'table_b'
-BEST_STORY_URL_AVG_TABLE_NAME = 'table_c'
-STORY_COUNT_PER_AUTHOR = 'table_d'
+
+# Query related
+MAX_RESULT_COUNT = 20
