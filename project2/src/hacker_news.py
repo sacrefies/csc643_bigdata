@@ -20,12 +20,26 @@ Developers shall implement the query function here to separate such from the web
 The controllers shall be implemented in other modules/classes.
 """
 
+# built-in libs
+import json
 # google bigquery
 
 # project home brews
-from settings import GOOG_PROJECT_ID, GOOG_DATASET_NAME
-from settings import \
+from settings import GOOG_PROJECT_ID, GOOG_DATASET_NAME,\
+    GOOG_PUBLIC_DATA_PROJ_ID, GOOG_HACKER_NEWS_SOURCE, GOOG_HACKER_NEWS_TABLE,\
     STORY_COUNT_TABLE_NAME, LOWEST_SCORE_TABLE_NAME, \
     BEST_STORY_URL_AVG_TABLE_NAME, STORY_COUNT_PER_AUTHOR
 from bigquery import BigQuery
 
+
+def get_story_count():
+    bq = BigQuery()
+    bq.get_client()
+    sql = """
+        SELECT COUNT(id) as storyCount
+        FROM `%s.%s.%s`
+        WHERE
+          type = 'story'
+    """ % (GOOG_PUBLIC_DATA_PROJ_ID, GOOG_HACKER_NEWS_SOURCE, GOOG_HACKER_NEWS_TABLE)
+    rs, row_count = bq.async_query(sql)
+    return rs

@@ -15,31 +15,97 @@ limitations under the License.
 -->
 
 {% include "header.html" %}
-<div class="page-header">
-    <h1>{{ headline }}</h1>
+<div class="container">
+    <form name="tabToggleControl" id="tabToggleControl">
+        <!-- input type="hidden" value="{{active_tab}}" id="activeTab" name="activeTab"/ -->
+        <input type="hidden" value="QueryB" id="activeTab" name="activeTab"/>
+    </form>
+    <ul class="nav nav-tabs" id="navControl">
+        <li class="active" id="navQueryA">
+            <a data-toggle="tab" href="#tabQueryA">Story Count</a></li>
+        <li id="navQueryB"><a data-toggle="tab" href="#tabQueryB">The Worst Story</a></li>
+        <li id="navQueryC"><a data-toggle="tab" href="#tabQueryC">Best Story Producer on AVG</a></li>
+        <li id="navQueryD"><a data-toggle="tab" href="#tabQueryD">Author KPI: NYT/Wired</a></li>
+    </ul>
+    <div class="tab-content">
+        <div id="tabQueryA" class="tab-pane fade in active">
+            <h3>How many stories are there?</h3>
+            <!-- form for query a -->
+            <form action="/storyCount" name="frmStoryCount" id="frmStoryCount" method="GET">
+                <input type="hidden" value="QueryA" name="inputCurrTab"/>
+                <input type="submit" class="btn btn-default" value="Get Result" id="submitFrmStoryCount"/>
+            </form>
+            <p>
+                <!-- form for query a ends-->
+                {% if values %}
+                {% for v in values %}
+                {{v}}
+                {% endfor %}
+                {% endif %}
+            </p>
+        </div>
+        <div id="tabQueryB" class="tab-pane fade">
+            <h3>Which story has received the lowest score?</h3>
+            <!-- form for query b -->
+            <form action="/lowestScoreStory" name="frmLowestScore" id="frmLowestScore" method="GET">
+                <input type="hidden" value="QueryB" name="inputCurrTab"/>
+                <input type="submit" class="btn btn-default" value="Get Result"/>
+            </form>
+            <!-- form for query b ends-->
+            <p>
+                <!-- form for query a ends-->
+                {% if values %}
+                {% for v in values %}
+                {{v}}
+                {% endfor %}
+                {% endif %}
+            </p>
+        </div>
+        <div id="tabQueryC" class="tab-pane fade">
+            <h3>On average which URL produced the best story in 2010?</h3>
+            <!-- form for query c -->
+            <form action="/avgBestStoryProducer" name="frmBestStoryProducer" id="frmBestStoryProducer" method="GET">
+                <input type="hidden" value="QueryC" name="inputCurrTab"/>
+                <input type="submit" class="btn btn-default" value="Get Result"/>
+            </form>
+            <!-- form for query c ends-->
+            <p>
+                <!-- form for query a ends-->
+                {% if values %}
+                {% for v in values %}
+                {{v}}
+                {% endfor %}
+                {% endif %}
+            </p>
+        </div>
+        <div id="tabQueryD" class="tab-pane fade">
+            <h3>List how many stories where posted by each author on nytimes.com and wired.com.</h3>
+            <!-- form for query d -->
+            <form action="/authorKPI" name="frmAuthorKPI" id="frmAuthorKPI" method="GET">
+                <input type="hidden" value="QueryD" name="inputCurrTab"/>
+                <input type="submit" class="btn btn-default" value="Get Result"/>
+            </form>
+            <!-- form for query d ends-->
+            <p>
+            <table class="table table-striped">
+                <tr>
+                    <th>Author</th>
+                    <th># of Stories</th>
+                    <th>Company</th>
+                </tr>
+                {% if values %}
+                {% for author, cnt, company in values %}
+                <tr>
+                    <td>{{author}}</td>
+                    <td>{{cnt}}</td>
+                    <td>{{company}}</td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+            </table>
+            </p>
+        </div>
+    </div>
+
 </div>
-
-<ul class="nav nav-tabs">
-  <li class="active"><a href="#">Case A</a></li>
-  <li><a href="#">Case B</a></li>
-  <li><a href="#">Case C</a></li>
-  <li><a href="#">Case D</a></li>
-</ul>
-
-<!-- form for query a -->
- <form>
-  <div class="form-group">
-    <label for="email">Email address:</label>
-    <input type="email" class="form-control" id="email">
-  </div>
-  <div class="form-group">
-    <label for="pwd">Password:</label>
-    <input type="password" class="form-control" id="pwd">
-  </div>
-  <div class="checkbox">
-    <label><input type="checkbox"> Remember me</label>
-  </div>
-  <button type="submit" class="btn btn-default">Submit</button>
-</form>
-<!-- form for query a ends-->
 {% include "footer.html" %}
