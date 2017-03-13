@@ -253,6 +253,52 @@ class BigQuery(object):
 
         return rs, total_rows
 
+    def transfer_from_query(self, dest_table, query, params={}, dest_datset=None):
+        """Run the given query, save the query result set into the destination table.
+        This function has no return value.
+
+        :param dest_table: The name of the table which is to save the query result set.
+                           The table will be created automatically if it does not exists;
+                           If The table exists, the existing data will be overwritten.
+        :type dest_table: str
+        :param query: The query to be executed.
+        :type query: str
+        :param params: The parameters that the query uses.
+        :type params: tuple
+        :param dest_datset: The name of the dataset which has the destination table.
+                            If omitted, ``GOOG_DATASET_NAME`` is used by default.
+        :type dest_datset: str
+        """
+        if not dest_table or not query:
+            return
+
+        self.__cli = self.get_client()
+        ds = self.__cli.dataset(dest_datset) if dest_datset else self.get_dataset()
+        tbl_save = ds.table(dest_table)
+
+        trans_job = self.__cli.run_async_query(str(uuid.uuid4()), query, query_parameters=params)
+        trans_job.use_legacy_sql = False
+        trans_job.destination = tbl_save
+
+        # configuration.copy.writeDisposition
+        # string [Optional] Specifies the action that occurs if the destination table already exists.
+        #
+        # The following values are supported:
+        #
+        # WRITE_TRUNCATE: If the table already exists, BigQuery overwrites the table data.
+        # WRITE_APPEND: If the table already exists, BigQuery appends the data to the table.
+        # WRITE_EMPTY: If the table already exists and contains data, a 'duplicate' error is returned in the job result.
+        #
+        # The default value is WRITE_EMPTY.
+        #
+        # Each action is atomic and only occurs if BigQuery is able to complete the job successfully.
+        # Creation, truncation and append actions occur as one atomic update upon job completion.
+        trans_job.write_disposition = 'WRITE_TRUNCATE' if tbl_save.exists() else 'WRITE_EMPTY'
+
+        trans_job.begin()
+        # wait for the job complete
+        BigQuery.__async_wait(trans_job)
+
     @classmethod
     def build_schema(cls, columns):
         """Construct a table's schema.

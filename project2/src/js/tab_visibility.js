@@ -21,27 +21,26 @@ var getTabContentId = function (name) {
 };
 
 var switchTab = function (name) {
-    if (name) {
-        // alert(name);
-        var navTabId = getNavTabId(name);
-        var tabContentId = getTabContentId(name);
+    if (!name) name = "QueryA";
+    // alert(name);
+    var navTabId = getNavTabId(name);
+    var tabContentId = getTabContentId(name);
 
-        // set all nav tab items deactivated first
-        // var li = $("#navControl li");
-        // for (var i = 0; i < li.length; i++) {
-        //     console.log(li[i].className);
-        //     li[i].className = "";
-        // }
-        $("#navControl li").each(function() {
-            $(this).removeClass();
-        });
-        // set the nav tab activated
-        $(navTabId).attr("class", "active");
-        // set all tabs deactivated first
-        $(".tab-pane").each(function () {
-            $(this).attr("class", "tab-pane fade");
-        });
-        $(tabContentId).addClass("in");
-        $(tabContentId).addClass("active");
-    }
+    // set all nav tab items deactivated first
+    // var li = $("#navControl li");
+    // for (var i = 0; i < li.length; i++) {
+    //     console.log(li[i].className);
+    //     li[i].className = "";
+    // }
+    $("#navControl li").each(function () {
+        $(this).removeClass();
+    });
+    // set the nav tab activated
+    $(navTabId).attr("class", "active");
+    // set all tabs deactivated first
+    $(".tab-pane").each(function () {
+        $(this).attr("class", "tab-pane fade");
+    });
+    $(tabContentId).addClass("in");
+    $(tabContentId).addClass("active");
 };
