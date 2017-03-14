@@ -22,11 +22,11 @@ The values of the variables will be set to different values for the runtime envi
 
 
 # The google project id - Place your project id here
-GOOG_PROJECT_ID = r'goog-cld-project-2'
+GOOG_PROJECT_ID = r''
 # The google service credentials.
-GOOG_CREDENTIALS_FILE_PATH = r'C:\Users\Jason\Desktop\goog-cld-project-2-9bbec6a77a85.json'
+GOOG_CREDENTIALS_FILE_PATH = r''
 # The dataset name
-GOOG_DATASET_NAME = r'python_api_test'
+GOOG_DATASET_NAME = r''
 
 # Query related
 MAX_RESULT_COUNT = 20
