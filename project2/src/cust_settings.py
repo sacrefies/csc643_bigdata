@@ -15,18 +15,18 @@
 # limitations under the License.
 #
 
-__doc__ = """This file includes variables for the values that configurable and changing.
+"""This file includes variables for the values that configurable and changing.
 Developers shall keep their own versions locally for their own development environments.
 The values of the variables will be set to different values for the runtime environment.
 """
 
 
 # The google project id - Place your project id here
-GOOG_PROJECT_ID = r''
+GOOG_PROJECT_ID = r'goog-cld-project-2'
 # The google service credentials.
-GOOG_CREDENTIALS_FILE_PATH = r''
+GOOG_CREDENTIALS_FILE_PATH = r'C:\Users\Jason\Desktop\goog-cld-project-2-9bbec6a77a85.json'
 # The dataset name
-GOOG_DATASET_NAME = r''
+GOOG_DATASET_NAME = r'python_api_test'
 
 # Query related
 MAX_RESULT_COUNT = 20

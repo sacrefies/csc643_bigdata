@@ -19,7 +19,7 @@ handlers:
   static_dir: fonts
 
 - url: /.*
-  script: main.app
+  script: wsgi.app
 
 libraries:
 - name: webapp2

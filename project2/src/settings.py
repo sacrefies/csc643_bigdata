@@ -46,4 +46,5 @@ TEMPLATE_ENV = jinja2.Environment(
 from cust_settings import *
 
 # Create/set the environment variable for the google service credentials
-os.environ[GOOG_CREDENTIALS_ENV_VAR] = GOOG_CREDENTIALS_FILE_PATH
+if not os.environ.has_key('GOOG_CREDENTIALS_ENV_VAR'):
+    os.environ[GOOG_CREDENTIALS_ENV_VAR] = GOOG_CREDENTIALS_FILE_PATH

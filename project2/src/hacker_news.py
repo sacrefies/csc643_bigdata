@@ -21,7 +21,7 @@ The controllers shall be implemented in other modules/classes.
 """
 
 # built-in libs
-import json
+from string import Template
 # google bigquery
 
 # project home brews
@@ -37,9 +37,66 @@ def get_story_count():
     bq.get_client()
     sql = """
         SELECT COUNT(id) as storyCount
-        FROM `%s.%s.%s`
+        FROM `$proj.$ds.$table`
         WHERE
-          type = 'story'
-    """ % (GOOG_PUBLIC_DATA_PROJ_ID, GOOG_HACKER_NEWS_SOURCE, GOOG_HACKER_NEWS_TABLE)
-    rs, row_count = bq.async_query(sql)
+          type = $stype
+    """
+    sub = {
+        'proj': GOOG_PUBLIC_DATA_PROJ_ID,
+        'ds': GOOG_HACKER_NEWS_SOURCE,
+        'table': GOOG_HACKER_NEWS_TABLE,
+        'stype': 'story'
+    }
+    rs, row_count = bq.async_query(Template(sql).substitute(sub))
     return rs
+
+
+def best_story_producer_on_avg():
+    sql = """
+        SELECT url, AVG(score) AS avgScore
+        FROM `$proj.$ds.$table`
+        WHERE
+            type = @type
+        AND timestamp <= @end_date
+        AND timestamp >= @start_date
+        GROUP BY url
+        HAVING avgScore >= (
+          SELECT AVG(score) as score
+          FROM `$proj.$ds.$table`
+          WHERE
+              type = @type
+          AND url IS NOT NULL
+          AND url <> ''
+          AND timestamp <= @end_date
+          AND timestamp >= @start_date
+          GROUP BY url
+          ORDER BY score DESC
+          LIMIT 1 )
+    """
+    sub = {
+        'proj': GOOG_PUBLIC_DATA_PROJ_ID,
+        'ds': GOOG_HACKER_NEWS_SOURCE,
+        'table': GOOG_HACKER_NEWS_TABLE
+    }
+    params = {
+        'type': 'story',
+        'start_date': '2010-01-01 00:00:01',
+        'end_date': '2010-12-31 23:59:59'
+    }
+    p = BigQuery.build_params(params)
+
+    bq = BigQuery()
+    bq.get_client()
+    bq.transfer_from_query(BEST_STORY_URL_AVG_TABLE_NAME, Template(sql).substitute(sub), p)
+
+    # fetch the data from the saving table
+    sql = """
+      SELECT *
+      FROM $ds.$table ORDER BY $col DESC
+    """
+    sub = {
+        'ds': GOOG_DATASET_NAME,
+        'table': BEST_STORY_URL_AVG_TABLE_NAME,
+        'col': 'avgScore'
+    }
+    return bq.sync_query(Template(sql).substitute(sub))[0]

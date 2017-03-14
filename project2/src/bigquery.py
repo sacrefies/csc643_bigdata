@@ -193,7 +193,6 @@ class BigQuery(object):
         # See: https://cloud.google.com/bigquery/sql-reference/
         query_results.use_legacy_sql = False
         query_results.run()
-
         # get all possible rows
         pt = None
         rs = []
@@ -327,7 +326,7 @@ class BigQuery(object):
         :param params: A ``python`` ``dict`` which holds the parameters
                        in form of {'name': value} where the value can be any object.
         :return: Returns a tuple of SQL parameter objects
-        :rtype: bigquery.ScalarQueryParameter
+        :rtype: tuple
         """
         if not params:
             return None
@@ -335,9 +334,9 @@ class BigQuery(object):
         def get_type(k, v):
             t = 'STRING'
             if isinstance(v, int):
-                t = 'INTEGER'
+                t = 'INT64'
             elif isinstance(v, float):
-                t = 'FLOAT'
+                t = 'FLOAT64'
             elif isinstance(v, bool):
                 t = 'BOOL'
             return bigquery.ScalarQueryParameter(k, t, v)

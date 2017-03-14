@@ -33,7 +33,8 @@ var switchTab = function (name) {
     //     li[i].className = "";
     // }
     $("#navControl li").each(function () {
-        $(this).removeClass();
+        if ($(this).prop("id") != "reset")
+            $(this).removeClass();
     });
     // set the nav tab activated
     $(navTabId).attr("class", "active");

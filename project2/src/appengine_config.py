@@ -15,13 +15,18 @@
 # limitations under the License.
 #
 
-"""This module includes the variable for server side routes for the requests.
+"""This file is the overridden configurations for the Google App Engine.
+
+To be able to use ``google.cloud.bigquery`` and other ``google.cloud`` libraries,
+such google client api libs must be `vendor-ed` into this web app project.
+
+:see: https://cloud.google.com/appengine/docs/standard/python/tools/using-libraries-python-27#vendoring.
+
+`Note`: Such ``lib`` sub-direction will be excluded from ``git``.
+Developers should make and keep their own ``lib`` for the local ``AppEngine``.
 """
 
+from google.appengine.ext import vendor
 
-# The server side redirection is defined here
-ROUTES = [
-    # (route/path, handler class full name)
-    (r'/avgBestStoryProducer', 'avg_best_story_producer.BestStoryProducerAVG'),
-    (r'/', 'index.MainHandler'),
-]
+# Add any libraries install in the "lib" folder.
+vendor.add('lib')
