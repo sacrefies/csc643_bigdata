@@ -224,3 +224,6 @@ FakesAssemblies/
 
 # idea related
 .idea/
+
+# third-party libraries
+lib/
