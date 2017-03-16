@@ -15,16 +15,15 @@
 # limitations under the License.
 #
 
+"""Main entrance of this web app which plays as an 'index.html'
+like in good old days.
+"""
+
 # built-in libs
 import os
 # google/webapp2 libs
 import webapp2
 from google.appengine.ext.webapp import template
-
-
-__doc__ = """Main entrance of this web app which plays as an 'index.html'
-like in good old days.
-"""
 
 
 class MainHandler(webapp2.RequestHandler):
@@ -37,7 +36,7 @@ class MainHandler(webapp2.RequestHandler):
         :return: A server rendered HTML text stream.
         """
         temp_vals = {
-            'activeTab': 'QueyA',
+            'activeTab': 'QueryA',
             'values': 'Hello Google AppEngine and BigQuery'
         }
         path = os.path.join(os.path.dirname(__file__), 'index.html')

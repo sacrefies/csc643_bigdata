@@ -100,3 +100,15 @@ def best_story_producer_on_avg():
         'col': 'avgScore'
     }
     return bq.sync_query(Template(sql).substitute(sub))[0]
+
+
+def reset():
+    bq = BigQuery()
+    bq.get_client()
+    ds = bq.get_dataset()
+    if ds.exists():
+        for t in ds.list_tables():
+            t.delete()
+        ds.reload()
+        ds.delete()
+    ds.create()

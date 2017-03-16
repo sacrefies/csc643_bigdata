@@ -15,14 +15,18 @@
 # limitations under the License.
 #
 
-"""This module includes the variable for server side routes for the requests.
+"""This file includes variables for the values that configurable and changing.
+Developers shall keep their own versions locally for their own development environments.
+The values of the variables will be set to different values for the runtime environment.
 """
 
+import os
+import webapp2
+from google.appengine.ext.webapp import template
+import hacker_news as hacker
 
-# The server side redirection is defined here
-ROUTES = [
-    # (route/path, handler class full name)
-    (r'/reset', 'reset.Reset'),
-    (r'/avgBestStoryProducer', 'avg_best_story_producer.BestStoryProducerAVG'),
-    (r'/', 'index.MainHandler'),
-]
+
+class Reset(webapp2.RequestHandler):
+    def get(self):
+        hacker.reset()
+        self.redirect('/')
