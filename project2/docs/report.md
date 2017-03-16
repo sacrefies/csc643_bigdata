@@ -14,15 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-<!--
-@Author: Jason Qiao Meng
-@Date:   03/02/2017 13:18:58
-@Email:  jm652564@sju.edu
-@Last modified by:   Jason Qiao Meng
-@Last modified time: 03/02/2017 16:52:48
--->
-
-
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
@@ -90,28 +81,65 @@ The application developed in this project allows web clients to process the foll
 
 ## Implementation
 
-### Database Connection
-
+### Connecting to Google BigQuery
 
 ### Global Settings
 
-
 ### Features
 
-
-## Launch the App
-
+## Running the App
+This web app is development for [Google App Engine][goog_python_app_engine]. It can run locally without `Google Cloud Platform`'s `standard environment`.
+However there are a few things to be done before the app can be run.
 
 ### Prerequisites
+Make sure the following software packages are installed.
 
+#### Google Cloud SDK and App Engine
++ Download and install the `Google Cloud SDK` from https://cloud.google.com/sdk/docs/.
++ Initialize the `Google Cloud Client` environment by using the following command:
+```cmd
+X:\> gcloud init
+```
++ Install [Google App Engine][goog_python_app_engine] by using the following commands:
+```cmd
+X:\> gcloud components install app-engine-python
+X:\> gcloud components install app-engine-python-extras
+```
 
-### Set Up
+#### Python Libraries Required
+Go to the project's `src` directory, make a sub directory named `lib`, and apply the following commands:
+```cmd
+X:\> pip install -U -t lib/ google-api-python-client
+X:\> pip install -U -t lib/ google-cloud-bigquery
+```
 
+#### Google Cloud Project
+A valid `Google Cloud` project is used by this app.
 
-### Run
++ Go to [Google Cloud Console](https://console.cloud.google.com) and make sure there is a functional project.
++ Go to `IAM & Admin` page of the `Google Cloud Console`, assign `Bigquery > Data Owner` role to the service account.
 
-## About Team 1
-Team 1 consists of three students, who are:
+### Configuration
+Before the app can be driven by the [Google App Engine][goog_python_app_engine], A few changes should be made for the project to adapt to the local environment.
+
+Open `cust_settings.py`, set the proper values to the following variables:
+```python
+# The google project id - Place your project id here
+GOOG_PROJECT_ID = r'<project_id>'
+# The google service credentials.
+GOOG_CREDENTIALS_FILE_PATH = r'<service_account_secret_json_file>'
+# The dataset name
+GOOG_DATASET_NAME = r'<dataset_id>'
+```
+
+### Launching The App
+Use the following command to run the web app:
+```cmd
+X:\<project_root>\src\> dev_appserver.py app.yaml
+```
+
+# About Team 1
+Team 1 consists of three members, who are:
 + Jason Qiao Meng *(Team Lead)*
 + Sarah Cooney *(Developer)*
 + Mingyuan Li *(Developer)*
