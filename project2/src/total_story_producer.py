@@ -15,30 +15,26 @@
 # limitations under the License.
 #
 
+
+"""This module includes view controller class for the query c:
+  - On average which URL produced the best story in 2010?
+"""
+
 # built-in libs
 import os
 # google/webapp2 libs
 import webapp2
 from google.appengine.ext.webapp import template
+# homemade ones
+import hacker_news as hacker
 
 
-__doc__ = """Main entrance of this web app which plays as an 'index.html'
-like in good old days.
-"""
-
-
-class MainHandler(webapp2.RequestHandler):
-    """The site's front page handler class.
-    """
-
-    def get(self):
-        """Respond to a client http request at '/'
-
-        :return: A server rendered HTML text stream.
-        """
+class TotalStoryProducer(webapp2.RequestHandler):
+    def post(self):
+        rows = hacker.get_story_count()
         temp_vals = {
-            'activeTab': 'QueyA',
-            'values': 'Hello Google AppEngine and BigQuery'
+            'active_tab': 'QueryA',
+            'values': rows if rows else None
         }
         path = os.path.join(os.path.dirname(__file__), 'index.html')
         self.response.headers['Content-Type'] = 'text/html'

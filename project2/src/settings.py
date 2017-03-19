@@ -15,10 +15,11 @@
 # limitations under the License.
 #
 
-"""This file is the base configuration which keeps the CONSTANTS."""
-
 import os
+# this lib is only for local testing using Paste HTTP server
+import jinja2
 
+__doc__ = """This file is the base configuration which keeps the CONSTANTS."""
 
 # The source connection string for Hacker News
 GOOG_HACKER_NEWS_TABLE = r'full'
@@ -33,10 +34,17 @@ LOWEST_SCORE_TABLE_NAME = 'table_b'
 BEST_STORY_URL_AVG_TABLE_NAME = 'table_c'
 STORY_COUNT_PER_AUTHOR = 'table_d'
 
+# To use the template framework, this global constant must be set.
+#  - this variable is only for local testing using Paste HTTP server
+TEMPLATE_ENV = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
+    extensions=['jinja2.ext.autoescape'],
+    autoescape=True)
+
 # To override base settings values
 # if some are redefined in the cust_settings.py
 from cust_settings import *
 
 # Create/set the environment variable for the google service credentials
-if GOOG_CREDENTIALS_ENV_VAR not in os.environ:
+if not os.environ.has_key('GOOG_CREDENTIALS_ENV_VAR'):
     os.environ[GOOG_CREDENTIALS_ENV_VAR] = GOOG_CREDENTIALS_FILE_PATH

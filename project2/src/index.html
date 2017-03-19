@@ -25,7 +25,7 @@ limitations under the License.
         <li id="navQueryB"><a data-toggle="tab" href="#tabQueryB">The Worst Story</a></li>
         <li id="navQueryC"><a data-toggle="tab" href="#tabQueryC">Best Story Producer on AVG</a></li>
         <li id="navQueryD"><a data-toggle="tab" href="#tabQueryD">Author KPI: NYT/Wired</a></li>
-        <li id="reset" class="pull-right"><a href="/reset">Reset <span class="glyphicon glyphicon-erase"></span></a></li>
+        <li id="reset" class="pull-right"><a href="/">Reset <span class="glyphicon glyphicon-erase"></span></a></li>
     </ul>
     <div class="tab-content">
         <div id="tabQueryA" class="tab-pane fade in active">
@@ -70,24 +70,22 @@ limitations under the License.
                 <input type="submit" class="btn btn-default" value="Get Result"/>
             </form>
             <!-- form for query c ends-->
-            <div>
-                <table class="table table-striped">
-                    <tr>
-                        <th>URL ({{ active_tab }})</th>
-                        <th>AVG SCORE</th>
-                    </tr>
-                    {% if values and active_tab == "QueryC" %}
-                        {% for row in values %}
-                            <tr>
-                                <td>{{ row.0 }}</td>
-                                <td>{{ row.1 }}</td>
-                            </tr>
-                        {% endfor %}
-                    {% else %}
-                        Please use "Get Result" to show the data.
-                    {% endif %}
-                </table>
-            </div>
+            <table class="table table-striped">
+                <tr>
+                    <th>URL ({{ active_tab }})</th>
+                    <th>AVG SCORE</th>
+                </tr>
+                {% if values and active_tab == "QueryC" %}
+                    {% for row in values %}
+                        <tr>
+                            <td>{{ row.0 }}</td>
+                            <td>{{ row.1 }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    Please use "Get Result" to show the data.
+                {% endif %}
+            </table>
         </div>
         <div id="tabQueryD" class="tab-pane fade">
             <h3>List how many stories where posted by each author on nytimes.com and wired.com.</h3>
@@ -96,26 +94,24 @@ limitations under the License.
                 <input type="submit" class="btn btn-default" value="Get Result"/>
             </form>
             <!-- form for query d ends-->
-            <div>
-                <table class="table table-striped">
-                    <tr>
-                        <th>Author</th>
-                        <th># of Stories</th>
-                        <th>Company</th>
-                    </tr>
-                    {% if values and active_tab == "QueryD" %}
-                        {% for author, cnt, company in values %}
-                            <tr>
-                                <td>{{ author }}</td>
-                                <td>{{ cnt }}</td>
-                                <td>{{ company }}</td>
-                            </tr>
-                        {% endfor %}
-                    {% else %}
-                        Please use "Get Result" to show the data.
-                    {% endif %}
-                </table>
-            </div>
+            <table class="table table-striped">
+                <tr>
+                    <th>Author</th>
+                    <th># of Stories</th>
+                    <th>Company</th>
+                </tr>
+                {% if values and active_tab == "QueryD" %}
+                    {% for author, cnt, company in values %}
+                        <tr>
+                            <td>{{ author }}</td>
+                            <td>{{ cnt }}</td>
+                            <td>{{ company }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    Please use "Get Result" to show the data.
+                {% endif %}
+            </table>
         </div>
     </div>
 
