@@ -22,22 +22,18 @@ The controllers shall be implemented in other modules/classes.
 
 # built-in libs
 from string import Template
-# google bigquery
-
 # project home brews
-from settings import GOOG_PROJECT_ID, GOOG_DATASET_NAME,\
-    GOOG_PUBLIC_DATA_PROJ_ID, GOOG_HACKER_NEWS_SOURCE, GOOG_HACKER_NEWS_TABLE_STORIES, GOOG_HACKER_NEWS_TABLE_FULL,\
+from settings import GOOG_PROJECT_ID, GOOG_DATASET_NAME, \
+    GOOG_PUBLIC_DATA_PROJ_ID, GOOG_HACKER_NEWS_SOURCE, GOOG_HACKER_NEWS_TABLE_STORIES, GOOG_HACKER_NEWS_TABLE_FULL, \
     STORY_COUNT_TABLE_NAME, LOWEST_SCORE_TABLE_NAME, \
     BEST_STORY_URL_AVG_TABLE_NAME, STORY_COUNT_PER_AUTHOR
 from bigquery import BigQuery
 
 
 def get_story_count():
-   # bq = BigQuery()
-   # bq.get_client()
     sql = """
-        SELECT COUNT(id) as storyCount
-        FROM `$proj.$ds.$table`
+        SELECT COUNT(id) AS storyCount
+        FROM `$proj.$ds.$TABLE`
     """
     sub = {
         'proj': GOOG_PUBLIC_DATA_PROJ_ID,
@@ -52,38 +48,34 @@ def get_story_count():
     # fetch the data from the saving table
     sql = """
          SELECT *
-         FROM $ds.$table ORDER BY $col DESC
+         FROM $ds.$TABLE ORDER BY $col DESC
        """
     sub = {
-       'ds': GOOG_DATASET_NAME,
-       'table': STORY_COUNT_TABLE_NAME,
-       'col': 'storyCount'
+        'ds': GOOG_DATASET_NAME,
+        'table': STORY_COUNT_TABLE_NAME,
+        'col': 'storyCount'
     }
     return bq.sync_query(Template(sql).substitute(sub))[0]
-
-
-# rs, row_count = bq.async_query(Template(sql).substitute(sub))
-    #return rs
 
 
 def best_story_producer_on_avg():
     sql = """
         SELECT url, AVG(score) AS avgScore
-        FROM `$proj.$ds.$table`
+        FROM `$proj.$ds.$TABLE`
         WHERE
-            type = @type
-        AND timestamp <= @end_date
-        AND timestamp >= @start_date
+            TYPE = @type
+        AND TIMESTAMP <= @end_date
+        AND TIMESTAMP >= @start_date
         GROUP BY url
         HAVING avgScore >= (
-          SELECT AVG(score) as score
-          FROM `$proj.$ds.$table`
+          SELECT AVG(score) AS score
+          FROM `$proj.$ds.$TABLE`
           WHERE
-              type = @type
+              TYPE = @type
           AND url IS NOT NULL
           AND url <> ''
-          AND timestamp <= @end_date
-          AND timestamp >= @start_date
+          AND TIMESTAMP <= @end_date
+          AND TIMESTAMP >= @start_date
           GROUP BY url
           ORDER BY score DESC
           LIMIT 1 )
@@ -107,7 +99,7 @@ def best_story_producer_on_avg():
     # fetch the data from the saving table
     sql = """
       SELECT *
-      FROM $ds.$table ORDER BY $col DESC
+      FROM $ds.$TABLE ORDER BY $col DESC
     """
     sub = {
         'ds': GOOG_DATASET_NAME,

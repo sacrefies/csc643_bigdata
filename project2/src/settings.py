@@ -15,11 +15,7 @@
 # limitations under the License.
 #
 
-import os
-# this lib is only for local testing using Paste HTTP server
-import jinja2
-
-__doc__ = """This file is the base configuration which keeps the CONSTANTS."""
+"""This file is the base configuration which keeps the CONSTANTS."""
 
 # The source connection string for Hacker News
 GOOG_HACKER_NEWS_TABLE_FULL = r'full'
@@ -35,13 +31,7 @@ LOWEST_SCORE_TABLE_NAME = 'table_b'
 BEST_STORY_URL_AVG_TABLE_NAME = 'table_c'
 STORY_COUNT_PER_AUTHOR = 'table_d'
 
-# To use the template framework, this global constant must be set.
-#  - this variable is only for local testing using Paste HTTP server
-TEMPLATE_ENV = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
-    extensions=['jinja2.ext.autoescape'],
-    autoescape=True)
-
+import os
 # To override base settings values
 # if some are redefined in the cust_settings.py
 from cust_settings import *

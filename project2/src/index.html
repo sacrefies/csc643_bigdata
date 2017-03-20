@@ -25,7 +25,8 @@ limitations under the License.
         <li id="navQueryB"><a data-toggle="tab" href="#tabQueryB">The Worst Story</a></li>
         <li id="navQueryC"><a data-toggle="tab" href="#tabQueryC">Best Story Producer on AVG</a></li>
         <li id="navQueryD"><a data-toggle="tab" href="#tabQueryD">Author KPI: NYT/Wired</a></li>
-        <li id="reset" class="pull-right"><a href="/">Reset <span class="glyphicon glyphicon-erase"></span></a></li>
+        <li id="reset" class="pull-right"><a href="/reset">Reset <span class="glyphicon glyphicon-erase"></span></a>
+        </li>
     </ul>
     <div class="tab-content">
         <div id="tabQueryA" class="tab-pane fade in active">
@@ -37,9 +38,7 @@ limitations under the License.
             <p>
                 <!-- form for query a ends-->
                 {% if values and active_tab == "QueryA" %}
-                    {% for v in values %}
-                        {{ v }}
-                    {% endfor %}
+                    {{ values.0.0 }}
                 {% else %}
                     Please use "Get Result" to show the data.
                 {% endif %}

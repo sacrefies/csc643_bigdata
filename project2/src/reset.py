@@ -20,13 +20,13 @@ Developers shall keep their own versions locally for their own development envir
 The values of the variables will be set to different values for the runtime environment.
 """
 
-import os
 import webapp2
-from google.appengine.ext.webapp import template
 import hacker_news as hacker
 
 
 class Reset(webapp2.RequestHandler):
+    """Performs a environment clean-up."""
+
     def get(self):
         hacker.reset()
         self.redirect('/')

@@ -16,7 +16,7 @@
 #
 
 
-"""This module includes view controller class for the query c:
+"""This module includes view controller class for the query A:
   - On average which URL produced the best story in 2010?
 """
 
