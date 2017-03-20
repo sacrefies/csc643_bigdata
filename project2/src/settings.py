@@ -22,7 +22,8 @@ import jinja2
 __doc__ = """This file is the base configuration which keeps the CONSTANTS."""
 
 # The source connection string for Hacker News
-GOOG_HACKER_NEWS_TABLE = r'full'
+GOOG_HACKER_NEWS_TABLE_FULL = r'full'
+GOOG_HACKER_NEWS_TABLE_STORIES = r'stories'
 GOOG_HACKER_NEWS_SOURCE = r'hacker_news'
 GOOG_PUBLIC_DATA_PROJ_ID = r'bigquery-public-data'
 # The google service secret variable name

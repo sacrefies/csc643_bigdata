@@ -26,29 +26,44 @@ from string import Template
 
 # project home brews
 from settings import GOOG_PROJECT_ID, GOOG_DATASET_NAME,\
-    GOOG_PUBLIC_DATA_PROJ_ID, GOOG_HACKER_NEWS_SOURCE, GOOG_HACKER_NEWS_TABLE,\
+    GOOG_PUBLIC_DATA_PROJ_ID, GOOG_HACKER_NEWS_SOURCE, GOOG_HACKER_NEWS_TABLE_STORIES, GOOG_HACKER_NEWS_TABLE_FULL,\
     STORY_COUNT_TABLE_NAME, LOWEST_SCORE_TABLE_NAME, \
     BEST_STORY_URL_AVG_TABLE_NAME, STORY_COUNT_PER_AUTHOR
 from bigquery import BigQuery
 
 
 def get_story_count():
-    bq = BigQuery()
-    bq.get_client()
+   # bq = BigQuery()
+   # bq.get_client()
     sql = """
         SELECT COUNT(id) as storyCount
         FROM `$proj.$ds.$table`
-        WHERE
-          type = $stype
     """
     sub = {
         'proj': GOOG_PUBLIC_DATA_PROJ_ID,
         'ds': GOOG_HACKER_NEWS_SOURCE,
-        'table': GOOG_HACKER_NEWS_TABLE,
-        'stype': 'story'
+        'table': GOOG_HACKER_NEWS_TABLE_STORIES
     }
-    rs, row_count = bq.async_query(Template(sql).substitute(sub))
-    return rs
+
+    bq = BigQuery()
+    bq.get_client()
+    bq.transfer_from_query(STORY_COUNT_TABLE_NAME, Template(sql).substitute(sub))
+
+    # fetch the data from the saving table
+    sql = """
+         SELECT *
+         FROM $ds.$table ORDER BY $col DESC
+       """
+    sub = {
+       'ds': GOOG_DATASET_NAME,
+       'table': STORY_COUNT_TABLE_NAME,
+       'col': 'storyCount'
+    }
+    return bq.sync_query(Template(sql).substitute(sub))[0]
+
+
+# rs, row_count = bq.async_query(Template(sql).substitute(sub))
+    #return rs
 
 
 def best_story_producer_on_avg():
@@ -76,7 +91,7 @@ def best_story_producer_on_avg():
     sub = {
         'proj': GOOG_PUBLIC_DATA_PROJ_ID,
         'ds': GOOG_HACKER_NEWS_SOURCE,
-        'table': GOOG_HACKER_NEWS_TABLE
+        'table': GOOG_HACKER_NEWS_TABLE_FULL
     }
     params = {
         'type': 'story',
