@@ -33,7 +33,7 @@ from bigquery import BigQuery
 def get_story_count():
     sql = """
         SELECT COUNT(id) AS storyCount
-        FROM `$proj.$ds.$TABLE`
+        FROM `$proj.$ds.$table`
     """
     sub = {
         'proj': GOOG_PUBLIC_DATA_PROJ_ID,
@@ -48,7 +48,7 @@ def get_story_count():
     # fetch the data from the saving table
     sql = """
          SELECT *
-         FROM $ds.$TABLE ORDER BY $col DESC
+         FROM $ds.$table ORDER BY $col DESC
        """
     sub = {
         'ds': GOOG_DATASET_NAME,
@@ -61,7 +61,7 @@ def get_story_count():
 def best_story_producer_on_avg():
     sql = """
         SELECT url, AVG(score) AS avgScore
-        FROM `$proj.$ds.$TABLE`
+        FROM `$proj.$ds.$table`
         WHERE
             TYPE = @type
         AND TIMESTAMP <= @end_date
@@ -69,7 +69,7 @@ def best_story_producer_on_avg():
         GROUP BY url
         HAVING avgScore >= (
           SELECT AVG(score) AS score
-          FROM `$proj.$ds.$TABLE`
+          FROM `$proj.$ds.$table`
           WHERE
               TYPE = @type
           AND url IS NOT NULL
@@ -99,7 +99,7 @@ def best_story_producer_on_avg():
     # fetch the data from the saving table
     sql = """
       SELECT *
-      FROM $ds.$TABLE ORDER BY $col DESC
+      FROM $ds.$table ORDER BY $col DESC
     """
     sub = {
         'ds': GOOG_DATASET_NAME,
