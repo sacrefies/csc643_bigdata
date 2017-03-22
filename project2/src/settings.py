@@ -37,5 +37,5 @@ import os
 from cust_settings import *
 
 # Create/set the environment variable for the google service credentials
-if not os.environ.has_key('GOOG_CREDENTIALS_ENV_VAR'):
+if GOOG_CREDENTIALS_ENV_VAR not in os.environ:
     os.environ[GOOG_CREDENTIALS_ENV_VAR] = GOOG_CREDENTIALS_FILE_PATH
