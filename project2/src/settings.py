@@ -31,7 +31,13 @@ LOWEST_SCORE_TABLE_NAME = 'table_b'
 BEST_STORY_URL_AVG_TABLE_NAME = 'table_c'
 STORY_COUNT_PER_AUTHOR = 'table_d'
 
+# Set the url fetching timeout time in seconds.
+#   note: the default is 5 secs
+API_URL_FETCH_TIMEOUT = 30
+
+
 import os
+from google.appengine.api import urlfetch
 # To override base settings values
 # if some are redefined in the cust_settings.py
 from cust_settings import *
@@ -39,3 +45,6 @@ from cust_settings import *
 # Create/set the environment variable for the google service credentials
 if GOOG_CREDENTIALS_ENV_VAR not in os.environ:
     os.environ[GOOG_CREDENTIALS_ENV_VAR] = GOOG_CREDENTIALS_FILE_PATH
+
+
+urlfetch.set_default_fetch_deadline(API_URL_FETCH_TIMEOUT)
