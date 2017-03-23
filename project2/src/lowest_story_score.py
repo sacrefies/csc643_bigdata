@@ -27,13 +27,16 @@ import webapp2
 from google.appengine.ext.webapp import template
 # homemade ones
 import hacker_news as hacker
+from settings import MAX_RESULT_COUNT
 
 
 class LowestStoryScore(webapp2.RequestHandler):
     def post(self):
-        rows = hacker.get_lowest_story_score()
+        rows, count = hacker.get_lowest_story_score()
         temp_vals = {
             'active_tab': 'QueryB',
+            'total_count': count,
+            'page_size': MAX_RESULT_COUNT,
             'values': rows if rows else None
         }
         path = os.path.join(os.path.dirname(__file__), 'index.html')

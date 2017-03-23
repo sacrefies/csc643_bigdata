@@ -42,23 +42,6 @@ limitations under the License.
 <div class="page-break"></div>
 
 ## Table of Content
-<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
-
-- [Project 2: Playing with Hacker News Data](#project-2-playing-with-hacker-news-data)
-	- [Table of Content](#table-of-content)
-	- [Introduction](#introduction)
-		- [License](#license)
-	- [Implementation](#implementation)
-		- [Database Connection](#database-connection)
-		- [Global Settings](#global-settings)
-		- [Features](#features)
-	- [Launch the App](#launch-the-app)
-		- [Prerequisites](#prerequisites)
-		- [Set Up](#set-up)
-		- [Run](#run)
-	- [About Team 1](#about-team-1)
-
-<!-- /TOC -->
 
 <p>&nbsp;</p>
 <p>&nbsp;</p>
@@ -69,10 +52,10 @@ limitations under the License.
 This project is developed in Python. It is built on top of [WebApp2][webapp2] framework with the standard [Python Client API Libraries][goog_py_cli_api] to access to Google's backend public datasets.
 
 The application developed in this project allows web clients to process the following form-driven queries:
-+ a) How many stories are there?
-+ b) Which story has received the lowest score?
-+ c) On average which URL produced the best story in 2010?
-+ d) List how many stories where posted by each author on nytimes.com and wired.com.
++ How many stories are there?
++ Which story has received the lowest score?
++ On average which URL produced the best story in 2010?
++ List how many stories where posted by each author on nytimes.com and wired.com.
 
 *For team member contributions, see: [workload and responsibilities][ranking]*
 
@@ -80,8 +63,43 @@ The application developed in this project allows web clients to process the foll
 *Apache License V2.0* is applied to this project.
 
 ## Implementation
+This project implements a lightweight web application which is designed for [WebApp2][webapp2] framework and to be driven by [Google App Engine][goog_python_app_engine].
 
-### Connecting to Google BigQuery
+The implementation incorporates `Google Cloud BigQuery` library to execute some simple queries towards Google's public data set `Hacker News`, and display the query results on a HTML template.
+
+The source consists of 2 parts:
++ A wrapper class `BigQuery` which provides major features to facilitate query execution. Such class masks out the complexity of library `google.cloud.bigquery`.
++ A web application which conforms to the convention of [WebApp2][webapp2] and [Google App Engine][goog_python_app_engine], and which handles the requests from the web clients.
+
+### Technical Architecture
+The architecture of this application is designed on top of [WebApp2][webapp2] and [Google App Engine][goog_python_app_engine].
+
+#### Overview
+![alt text](architeture.png "The project architecture")
+
+#### Class Diagram
+// TODO
+
+#### Sequence Diagram
+The following diagram example demonstrates how the post request is handled by this App.
+![alt text](sequence.png "The project architecture")
+
+### Connecting to Hacker News Public Data Set
+The connection to the `hacker news` public data set is managed by the class `BigQuery` which is enclosed by the `Python` source file `bigquery.py`.
+
+The method `get_client()`, as figure 1 shows, creates a `Google BigQuery API` client with the service credentials defined by the settings variables `GOOG_CREDENTIALS_ENV_VAR` and `GOOG_CREDENTIALS_FILE_PATH`. See the section [Configuration](#configuration) for more information.
+```python
+    def get_client(self):
+        """Get a client of the big query service.
+
+        :return: An instance of a client of bigquery service
+        :rtype: bigquery.Client
+        """
+        self.__cli = self.__cli if self.__cli else bigquery.Client(self.__proj)
+        return self.__cli
+```
+*Figure 1: `get_client()` to create a `Google BigQuery Client` object.*
+
 
 ### Global Settings
 

@@ -43,19 +43,7 @@ def get_story_count():
 
     bq = BigQuery()
     bq.get_client()
-    bq.transfer_from_query(STORY_COUNT_TABLE_NAME, Template(sql).substitute(sub))
-
-    # fetch the data from the saving table
-    sql = """
-         SELECT *
-         FROM $ds.$table ORDER BY $col DESC
-       """
-    sub = {
-        'ds': GOOG_DATASET_NAME,
-        'table': STORY_COUNT_TABLE_NAME,
-        'col': 'storyCount'
-    }
-    return bq.sync_query(Template(sql).substitute(sub))[0]
+    return bq.async_query(Template(sql).substitute(sub), (), STORY_COUNT_TABLE_NAME)[0]
 
 
 def get_lowest_story_score():
@@ -73,19 +61,7 @@ def get_lowest_story_score():
 
     bq = BigQuery()
     bq.get_client()
-    # bq.transfer_from_query(LOWEST_SCORE_TABLE_NAME, Template(sql).substitute(sub))
-    #
-    # # fetch the data from the saving table
-    # sql = """
-    #     SELECT *
-    #     FROM $ds.$table
-    # """
-    # sub = {
-    #     'ds': GOOG_DATASET_NAME,
-    #     'table': LOWEST_SCORE_TABLE_NAME
-    # }
-    # return bq.async_query(Template(sql).substitute(sub))[0]
-    return bq.async_query(Template(sql).substitute(sub), (), LOWEST_SCORE_TABLE_NAME)[0]
+    return bq.async_query_limited(Template(sql).substitute(sub), dest_table=LOWEST_SCORE_TABLE_NAME)
 
 
 def best_story_producer_on_avg():
@@ -109,6 +85,7 @@ def best_story_producer_on_avg():
           GROUP BY url
           ORDER BY score DESC
           LIMIT 1 )
+          ORDER BY avgScore DESC
     """
     sub = {
         'proj': GOOG_PUBLIC_DATA_PROJ_ID,
@@ -124,19 +101,7 @@ def best_story_producer_on_avg():
 
     bq = BigQuery()
     bq.get_client()
-    bq.transfer_from_query(BEST_STORY_URL_AVG_TABLE_NAME, Template(sql).substitute(sub), p)
-
-    # fetch the data from the saving table
-    sql = """
-      SELECT *
-      FROM $ds.$table ORDER BY $col DESC
-    """
-    sub = {
-        'ds': GOOG_DATASET_NAME,
-        'table': BEST_STORY_URL_AVG_TABLE_NAME,
-        'col': 'avgScore'
-    }
-    return bq.sync_query(Template(sql).substitute(sub))[0]
+    return bq.async_query(Template(sql).substitute(sub), p, BEST_STORY_URL_AVG_TABLE_NAME)[0]
 
 
 def reset():
