@@ -277,7 +277,7 @@ class BigQuery(object):
 
         return rs, total_rows
 
-    def transfer_from_query(self, dest_table, query, params={}, dest_dataset=None):
+    def transfer_from_query(self, dest_table, query, params=(), dest_dataset=None):
         """Run the given query, save the query result set into the destination table.
         This function has no return value.
 
@@ -321,7 +321,7 @@ class BigQuery(object):
 
         trans_job.begin()
         # wait for the job complete
-        BigQuery.__async_wait(trans_job)
+        self.__async_wait(trans_job)
 
     @classmethod
     def build_schema(cls, columns):
