@@ -368,9 +368,8 @@ class BigQuery(object):
 
         return tuple([get_type(key, value) for key, value in params.iteritems()])
 
-    @classmethod
-    def __async_wait(cls, job):
-        """Wait for a job to be done.
+    def __async_wait(self, job):
+        """Wait for a job to finish.
 
         :param job: A `QueryJob` instance
         :type: :class:`google.cloud.bigquery.job.QueryJob`
