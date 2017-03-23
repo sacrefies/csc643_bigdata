@@ -99,7 +99,7 @@ class BigQuery(object):
     def __init__(self, project=None):
         """Create and initialize an instance of class BigQuery.
 
-        :param project: The name of the project. If omitted, settings.GOOG_PROJECT_ID is used by default.
+        :param project: (Optional) The name of the project. If omitted, settings.GOOG_PROJECT_ID is used by default.
         :type project: str
         """
         self.__proj = project if project else GOOG_PROJECT_ID
@@ -118,8 +118,8 @@ class BigQuery(object):
     def get_dataset(self, name=None):
         """Get a dataset handler object.
 
-        :param dataset: The name of the dataset. If omitted, settings.GOOG_DATASET_NAME is used by default.
-        :type dataset: str
+        :param name: (Optional) The name of the dataset. If omitted, settings.GOOG_DATASET_NAME is used by default.
+        :type name: str
         :return: An new instance of a Dataset.
         :rtype: bigquery.Dataset
         """
@@ -134,7 +134,7 @@ class BigQuery(object):
     def create_dataset(self, name=None):
         """Create a dataset.
 
-        :param name: The name of the dataset.
+        :param name: (Optional) The name of the dataset.
         :type name: str
         :return: Returns a dataset instance
         :rtype: bigquery.Dataset
@@ -181,7 +181,7 @@ class BigQuery(object):
 
         :param query: A Standard SQL that Google BigQuery accepts.
         :type query: str
-        :param params: The parameters that the query uses.
+        :param params: (Optional) The parameters that the query uses.
         :type params: tuple
         :return: Returns the result set (only values) and the total count of the affected rows.
         :rtype: tuple
@@ -204,7 +204,7 @@ class BigQuery(object):
 
         return rs, total_rows
 
-    def async_query(self, query, params=()):
+    def async_query(self, query, params=(), dest_table=None, dest_dataset=None):
         """Perform a query *asynchronously* and return the result and the total count of the affected rows.
         To use the parameters, please refer to the example below::
 
@@ -228,14 +228,39 @@ class BigQuery(object):
 
         :param query: A Standard SQL that Google BigQuery accepts.
         :type query: str
-        :param params: The parameters that the query uses.
+        :param params: (Optional) The parameters that the query uses.
         :type params: tuple
+        :param dest_table: (Optional) The name of the destination table where the job saves the result set.
+        :type dest_table: str
+        :param dest_dataset: (Optional) The name of the dataset which has the destination table.
+                            If omitted, ``GOOG_DATASET_NAME`` is used by default.
+        :type dest_dataset: str
         :return: Returns the result set (only values) and the total count of the affected rows.
         :rtype: tuple
         """
         self.__cli = self.get_client()
         query_job = self.__cli.run_async_query(str(uuid.uuid4()), query, query_parameters=params)
         query_job.use_legacy_sql = False
+        if dest_table:
+            ds = self.__cli.dataset(dest_dataset) if dest_dataset else self.get_dataset()
+            tbl_save = ds.table(dest_table)
+            query_job.destination = tbl_save
+            # configuration.copy.writeDisposition
+            # string [Optional] Specifies the action that occurs if the destination table already exists.
+            #
+            # The following values are supported:
+            #
+            # WRITE_TRUNCATE: If the table already exists, BigQuery overwrites the table data.
+            # WRITE_APPEND: If the table already exists, BigQuery appends the data to the table.
+            # WRITE_EMPTY: If the table already exists and contains data, a 'duplicate' error is returned
+            # in the job result.
+            #
+            # The default value is WRITE_EMPTY.
+            #
+            # Each action is atomic and only occurs if BigQuery is able to complete the job successfully.
+            # Creation, truncation and append actions occur as one atomic update upon job completion.
+            query_job.write_disposition = 'WRITE_TRUNCATE' if tbl_save.exists() else 'WRITE_EMPTY'
+
         query_job.begin()
         # wait for the job complete
         BigQuery.__async_wait(query_job)
@@ -252,7 +277,7 @@ class BigQuery(object):
 
         return rs, total_rows
 
-    def transfer_from_query(self, dest_table, query, params={}, dest_datset=None):
+    def transfer_from_query(self, dest_table, query, params={}, dest_dataset=None):
         """Run the given query, save the query result set into the destination table.
         This function has no return value.
 
@@ -262,17 +287,17 @@ class BigQuery(object):
         :type dest_table: str
         :param query: The query to be executed.
         :type query: str
-        :param params: The parameters that the query uses.
+        :param params: (Optional) The parameters that the query uses.
         :type params: tuple
-        :param dest_datset: The name of the dataset which has the destination table.
+        :param dest_dataset: (Optional) The name of the dataset which has the destination table.
                             If omitted, ``GOOG_DATASET_NAME`` is used by default.
-        :type dest_datset: str
+        :type dest_dataset: str
         """
         if not dest_table or not query:
             return
 
         self.__cli = self.get_client()
-        ds = self.__cli.dataset(dest_datset) if dest_datset else self.get_dataset()
+        ds = self.__cli.dataset(dest_dataset) if dest_dataset else self.get_dataset()
         tbl_save = ds.table(dest_table)
 
         trans_job = self.__cli.run_async_query(str(uuid.uuid4()), query, query_parameters=params)
@@ -348,8 +373,11 @@ class BigQuery(object):
         """Wait for a job to be done.
 
         :param job: A `QueryJob` instance
-        :type: bigquery.job.QueryJob
+        :type: :class:`google.cloud.bigquery.job.QueryJob`
         """
+        if not job:
+            return
+
         while True:
             # Refreshes the state via a GET request.
             job.reload()
