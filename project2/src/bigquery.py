@@ -263,7 +263,7 @@ class BigQuery(object):
 
         query_job.begin()
         # wait for the job complete
-        BigQuery.__async_wait(query_job)
+        self.__async_wait(query_job)
 
         # Drain the query results by requesting a page at a time.
         query_results = query_job.results()

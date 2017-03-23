@@ -58,6 +58,36 @@ def get_story_count():
     return bq.sync_query(Template(sql).substitute(sub))[0]
 
 
+def get_lowest_story_score():
+    sql = """
+        SELECT score, title, url, author
+        FROM `$proj.$ds.$table`
+        WHERE score is not null
+        AND score <= (SELECT MIN(score) FROM `$proj.$ds.$table`)
+    """
+    sub = {
+        'proj': GOOG_PUBLIC_DATA_PROJ_ID,
+        'ds': GOOG_HACKER_NEWS_SOURCE,
+        'table': GOOG_HACKER_NEWS_TABLE_STORIES
+    }
+
+    bq = BigQuery()
+    bq.get_client()
+    # bq.transfer_from_query(LOWEST_SCORE_TABLE_NAME, Template(sql).substitute(sub))
+    #
+    # # fetch the data from the saving table
+    # sql = """
+    #     SELECT *
+    #     FROM $ds.$table
+    # """
+    # sub = {
+    #     'ds': GOOG_DATASET_NAME,
+    #     'table': LOWEST_SCORE_TABLE_NAME
+    # }
+    # return bq.async_query(Template(sql).substitute(sub))[0]
+    return bq.async_query(Template(sql).substitute(sub), (), LOWEST_SCORE_TABLE_NAME)[0]
+
+
 def best_story_producer_on_avg():
     sql = """
         SELECT url, AVG(score) AS avgScore
