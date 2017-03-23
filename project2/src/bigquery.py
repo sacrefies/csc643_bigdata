@@ -350,6 +350,7 @@ class BigQuery(object):
 
         :param params: A ``python`` ``dict`` which holds the parameters
                        in form of {'name': value} where the value can be any object.
+        :type params: dict
         :return: Returns a tuple of SQL parameter objects
         :rtype: tuple
         """
