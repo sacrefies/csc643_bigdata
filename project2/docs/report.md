@@ -86,9 +86,10 @@ This project implements a lightweight web application which is designed for [Web
 
 The implementation incorporates `Google Cloud BigQuery` library to execute some simple queries towards Google's public data set `Hacker News`, and display the query results on a HTML template.
 
-The source consists of 2 parts:
-+ A wrapper class `BigQuery` which provides major features to facilitate query execution. Such class masks out the complexity of library `google.cloud.bigquery`.
-+ A web application which conforms to the convention of [WebApp2][webapp2] and [Google App Engine][goog_python_app_engine], and which handles the requests from the web clients.
+The source consists of 3 parts:
++ [x] A settings/configuration module to manage the global/customizable configurations
++ [x] A wrapper class `BigQuery` which provides major features to facilitate query execution. Such class masks out the complexity of library `google.cloud.bigquery`.
++ [x] A web application which conforms to the convention of [WebApp2][webapp2] and [Google App Engine][goog_python_app_engine], and which handles the requests from the web clients.
 
 ### Technical Architecture
 Exclusively, the architecture of this App is designed on top of and for [WebApp2][webapp2] and [Google App Engine][goog_python_app_engine].
@@ -99,6 +100,45 @@ Exclusively, the architecture of this App is designed on top of and for [WebApp2
 #### Sequence Diagram
 The following diagram example demonstrates how the post request is handled by this App.
 ![alt text](sequence.png "The project architecture")
+
+### Settings
+To be able to connect to `Google BigQuery API`, the public data sets and developer's own data set, a set of environmental settings must be established, such as `project id`, `data set name`, `table name`, etc.
+
+In the implementation, this project employs a settings module to manage the variables. One can make simple changes to the settings module to adapt for their local reality. See figure 5 and 6 for the detail.
+
+```python
+"""This file is the base configuration which keeps the CONSTANTS."""
+
+# The source connection string for Hacker News
+GOOG_HACKER_NEWS_TABLE_FULL = r'full'
+GOOG_HACKER_NEWS_TABLE_STORIES = r'stories'
+GOOG_HACKER_NEWS_SOURCE = r'hacker_news'
+GOOG_PUBLIC_DATA_PROJ_ID = r'bigquery-public-data'
+# The google service secret variable name
+GOOG_CREDENTIALS_ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS'
+
+# The data table name
+STORY_COUNT_TABLE_NAME = 'table_a'
+LOWEST_SCORE_TABLE_NAME = 'table_b'
+BEST_STORY_URL_AVG_TABLE_NAME = 'table_c'
+STORY_COUNT_PER_AUTHOR = 'table_d'
+
+
+import os
+# To override base settings values
+# if some are redefined in the cust_settings.py
+from cust_settings import *
+
+# Create/set the environment variable for the google service credentials
+if GOOG_CREDENTIALS_ENV_VAR not in os.environ:
+    os.environ[GOOG_CREDENTIALS_ENV_VAR] = GOOG_CREDENTIALS_FILE_PATH
+
+```
+*Figure 5: `settings.py` to manage the rarely changing variables*
+
+```python
+```
+*Figure 6: `cust_settings.py` to manage the frequently changing variables*
 
 ### Connecting to Hacker News Public Data Set
 The connection to the `hacker news` public data set is managed by the class `BigQuery` which is enclosed by the `Python` source file `bigquery.py`.
@@ -239,7 +279,45 @@ The query requests are:
 + On average which URL produced the best story in 2010?
 + List how many stories where posted by each author on nytimes.com and wired.com.
 
-#### Story
+#### Query A: Story Count
+This query's request is sent by a HTML form and is handled by the view class `TotalStoryCount`, and the query is executed by the function 'get_story_count()' in 'hacker_news.py'.
+
+Figure 5 and 6 show the implementations.
+
+```python
+class TotalStoryCount(webapp2.RequestHandler):
+    def post(self):
+        rows = hacker.get_story_count()
+        temp_vals = {
+            'active_tab': 'QueryA',
+            'values': rows if rows else None
+        }
+        path = os.path.join(os.path.dirname(__file__), 'index.html')
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write(template.render(path, temp_vals))
+
+```
+*Figure 5: `TotalStoryCount` class to handle the form POST request*
+
+
+```python
+def get_story_count():
+    sql = """
+        SELECT COUNT(id) AS storyCount
+        FROM `$proj.$ds.$table`
+    """
+    sub = {
+        'proj': GOOG_PUBLIC_DATA_PROJ_ID,
+        'ds': GOOG_HACKER_NEWS_SOURCE,
+        'table': GOOG_HACKER_NEWS_TABLE_STORIES
+    }
+
+    bq = BigQuery()
+    bq.get_client()
+    return bq.async_query(Template(sql).substitute(sub), params=(), dest_table=STORY_COUNT_TABLE_NAME)[0]
+
+```
+*Figure 6: `get_story_count()` to run the query*
 
 ## Running the App
 This web app is development for [Google App Engine][goog_python_app_engine]. It can run locally without `Google Cloud Platform`'s `standard environment`.
