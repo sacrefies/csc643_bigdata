@@ -43,7 +43,7 @@ def get_story_count():
 
     bq = BigQuery()
     bq.get_client()
-    return bq.async_query(Template(sql).substitute(sub), (), STORY_COUNT_TABLE_NAME)[0]
+    return bq.async_query(Template(sql).substitute(sub), params=(), dest_table=STORY_COUNT_TABLE_NAME)[0]
 
 
 def get_lowest_story_score():
@@ -61,7 +61,8 @@ def get_lowest_story_score():
 
     bq = BigQuery()
     bq.get_client()
-    return bq.async_query_limited(Template(sql).substitute(sub), dest_table=LOWEST_SCORE_TABLE_NAME)
+    # return bq.async_query_limited(Template(sql).substitute(sub), dest_table=LOWEST_SCORE_TABLE_NAME)
+    return bq.async_query(Template(sql).substitute(sub), params=(), dest_table=LOWEST_SCORE_TABLE_NAME)
 
 
 def best_story_producer_on_avg():

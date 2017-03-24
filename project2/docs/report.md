@@ -42,6 +42,25 @@ limitations under the License.
 <div class="page-break"></div>
 
 ## Table of Content
+- [Project 2: Playing with Hacker News Data](#project-2-playing-with-hacker-news-data)
+    - [Table of Content](#table-of-content)
+    - [Introduction](#introduction)
+        - [License](#license)
+    - [Implementation](#implementation)
+        - [Technical Architecture](#technical-architecture)
+            - [Overview](#overview)
+            - [Sequence Diagram](#sequence-diagram)
+        - [Connecting to Hacker News Public Data Set](#connecting-to-hacker-news-public-data-set)
+        - [Global Settings](#global-settings)
+        - [Features](#features)
+    - [Running the App](#running-the-app)
+        - [Prerequisites](#prerequisites)
+            - [Google Cloud SDK and App Engine](#google-cloud-sdk-and-app-engine)
+            - [Python Libraries Required](#python-libraries-required)
+            - [Google Cloud Project](#google-cloud-project)
+        - [Configuration](#configuration)
+        - [Launching The App](#launching-the-app)
+- [About Team 1](#about-team-1)
 
 <p>&nbsp;</p>
 <p>&nbsp;</p>
@@ -72,13 +91,10 @@ The source consists of 2 parts:
 + A web application which conforms to the convention of [WebApp2][webapp2] and [Google App Engine][goog_python_app_engine], and which handles the requests from the web clients.
 
 ### Technical Architecture
-The architecture of this application is designed on top of [WebApp2][webapp2] and [Google App Engine][goog_python_app_engine].
+Exclusively, the architecture of this App is designed on top of and for [WebApp2][webapp2] and [Google App Engine][goog_python_app_engine].
 
 #### Overview
 ![alt text](architeture.png "The project architecture")
-
-#### Class Diagram
-// TODO
 
 #### Sequence Diagram
 The following diagram example demonstrates how the post request is handled by this App.
@@ -89,21 +105,141 @@ The connection to the `hacker news` public data set is managed by the class `Big
 
 The method `get_client()`, as figure 1 shows, creates a `Google BigQuery API` client with the service credentials defined by the settings variables `GOOG_CREDENTIALS_ENV_VAR` and `GOOG_CREDENTIALS_FILE_PATH`. See the section [Configuration](#configuration) for more information.
 ```python
-    def get_client(self):
-        """Get a client of the big query service.
+def get_client(self):
+    """Get a client of the bigquery service.
 
-        :return: An instance of a client of bigquery service
-        :rtype: bigquery.Client
-        """
-        self.__cli = self.__cli if self.__cli else bigquery.Client(self.__proj)
-        return self.__cli
+    :return: An instance of the bigquery service client.
+    :rtype: bigquery.Client
+    """
+    self.__cli = self.__cli if self.__cli else bigquery.Client(self.__proj)
+    return self.__cli
 ```
 *Figure 1: `get_client()` to create a `Google BigQuery Client` object.*
 
+A query can be executed in either synchronous or asynchronous way. Figure 2 shows the method `sync_query` and figure 3 shows the method `async_query`.
+```python
+def sync_query(self, query, params=()):
+    """Perform a query and return the result and the total count of the affected rows.
+    To use the parameters, please refer to the example below::
+        query_parameters=(
+            bigquery.ScalarQueryParameter('corpus', 'STRING', corpus),
+            bigquery.ScalarQueryParameter(
+                'min_word_count',
+                'INT64',
+                min_word_count))
 
-### Global Settings
+    :param query: A Standard SQL that Google BigQuery accepts.
+    :type query: str
+    :param params: (Optional) The parameters that the query uses.
+    :type params: tuple
+    :return: Returns the result set (only values) and the total count of the affected rows.
+    :rtype: tuple
+    """
+    self.__cli = self.get_client()
+    query_results = self.__cli.run_sync_query(query, query_parameters=params)
 
-### Features
+    # Use standard SQL syntax for queries.
+    # See: https://cloud.google.com/bigquery/sql-reference/
+    query_results.use_legacy_sql = False
+    query_results.run()
+    # get all possible rows
+    pt = None
+    rs = []
+    while True:
+        row_data, total_rows, pt = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
+        rs += row_data
+        if not pt:
+            break
+
+    return rs, total_rows
+```
+*Figure 2: `sync_query` to run a query synchronously*
+
+```python
+def async_query(self, query, params=(), dest_table=None, dest_dataset=None):
+    """Perform a query *asynchronously* and return the result and the total count of the affected rows.
+
+    :param query: A Standard SQL that Google BigQuery accepts.
+    :type query: str
+    :param params: (Optional) The parameters that the query uses.
+    :type params: tuple
+    :param dest_table: (Optional) The name of the destination table where the job saves the result set.
+    :type dest_table: str
+    :param dest_dataset: (Optional) The name of the dataset which has the destination table.
+                        If omitted, ``GOOG_DATASET_NAME`` is used by default.
+    :type dest_dataset: str
+    :return: Returns the result set (only values) and the total count of the affected rows.
+    :rtype: tuple
+    """
+    self.__cli = self.get_client()
+    query_job = self.__cli.run_async_query(str(uuid.uuid4()), query, query_parameters=params)
+    query_job.use_legacy_sql = False
+    if dest_table:
+        ds = self.__cli.dataset(dest_dataset) if dest_dataset else self.get_dataset()
+        tbl_save = ds.table(dest_table)
+        query_job.destination = tbl_save
+        query_job.write_disposition = 'WRITE_TRUNCATE' if tbl_save.exists() else 'WRITE_EMPTY'
+
+    query_job.begin()
+    # wait for the job complete
+    self.__async_wait(query_job)
+
+    # Drain the query results by requesting a page at a time.
+    query_results = query_job.results()
+    rs = []
+    pt = None
+    while True:
+        row_data, total_rows, page_token = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
+        # rs += [row for row in row_data]
+        rs += row_data
+        if not page_token:
+            break
+
+    return rs, total_rows
+```
+*Figure 3: `async_query` to run a query asynchronously*
+
+The `BigQuery` class also provides a function `build_params()` to construct simple parameters for a parameterized query. Figure 4 shows how the paramters are built.
+```python
+@classmethod
+def build_params(cls, params):
+    """Construct a tuple of the SQL parameters.
+
+    `Note: this function produce scalar parameters only.`
+
+    :param params: A ``python`` ``dict`` which holds the parameters
+                   in form of {'name': value} where the value can be any object.
+    :type params: dict
+    :return: Returns a tuple of SQL parameter objects
+    :rtype: tuple
+    """
+    if not params:
+        return None
+
+    def get_type(k, v):
+        t = 'STRING'
+        if isinstance(v, int):
+            t = 'INT64'
+        elif isinstance(v, float):
+            t = 'FLOAT64'
+        elif isinstance(v, bool):
+            t = 'BOOL'
+        return bigquery.ScalarQueryParameter(k, t, v)
+
+    return tuple([get_type(key, value) for key, value in params.iteritems()])
+```
+*Figure 4: `build_params()` to construct parameters*
+
+### Functional Modules
+While the `BigQuery` class acts as the fundamental module, The queries and client requests are handled by the functional modules. The module `hacker_news.py` includes functions to run the queries that are asked by the requirements; The view controller modules incorporates [WebApp2][webapp2] framework to handle the requests and responses.
+
+The query requests are:
++ How many stories are there?
++ Which story has received the lowest score?
++ On average which URL produced the best story in 2010?
++ List how many stories where posted by each author on nytimes.com and wired.com.
+
+#### Story
 
 ## Running the App
 This web app is development for [Google App Engine][goog_python_app_engine]. It can run locally without `Google Cloud Platform`'s `standard environment`.

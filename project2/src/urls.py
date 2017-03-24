@@ -24,7 +24,7 @@ ROUTES = [
     # (route/path, handler class full name)
     (r'/reset', 'reset.Reset'),
     (r'/lowestScoreStory', 'lowest_story_score.LowestStoryScore'),
-    (r'/storyCount', 'total_story_producer.TotalStoryProducer'),
+    (r'/storyCount', 'total_story_producer.TotalStoryCount'),
     (r'/avgBestStoryProducer', 'avg_best_story_producer.BestStoryProducerAVG'),
     (r'/', 'index.MainHandler'),
 ]

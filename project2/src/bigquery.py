@@ -358,20 +358,6 @@ class BigQuery(object):
         trans_job = self.__cli.run_async_query(str(uuid.uuid4()), query, query_parameters=params)
         trans_job.use_legacy_sql = False
         trans_job.destination = tbl_save
-
-        # configuration.copy.writeDisposition
-        # string [Optional] Specifies the action that occurs if the destination table already exists.
-        #
-        # The following values are supported:
-        #
-        # WRITE_TRUNCATE: If the table already exists, BigQuery overwrites the table data.
-        # WRITE_APPEND: If the table already exists, BigQuery appends the data to the table.
-        # WRITE_EMPTY: If the table already exists and contains data, a 'duplicate' error is returned in the job result.
-        #
-        # The default value is WRITE_EMPTY.
-        #
-        # Each action is atomic and only occurs if BigQuery is able to complete the job successfully.
-        # Creation, truncation and append actions occur as one atomic update upon job completion.
         trans_job.write_disposition = 'WRITE_TRUNCATE' if tbl_save.exists() else 'WRITE_EMPTY'
 
         trans_job.begin()

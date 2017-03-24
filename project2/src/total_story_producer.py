@@ -29,7 +29,7 @@ from google.appengine.ext.webapp import template
 import hacker_news as hacker
 
 
-class TotalStoryProducer(webapp2.RequestHandler):
+class TotalStoryCount(webapp2.RequestHandler):
     def post(self):
         rows = hacker.get_story_count()
         temp_vals = {
