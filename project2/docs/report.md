@@ -242,7 +242,6 @@ def async_query(self, query, params=(), dest_table=None, dest_dataset=None):
     pt = None
     while True:
         row_data, total_rows, page_token = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
-        # rs += [row for row in row_data]
         rs += row_data
         if not page_token:
             break
@@ -303,7 +302,7 @@ class TotalStoryCount(webapp2.RequestHandler):
         self.response.out.write(template.render(path, temp_vals))
 
 ```
-*Figure 7: `TotalStoryCount` class to handle the form POST request*
+*Figure 7: class `TotalStoryCount` to handle the form POST request*
 
 
 ```python
@@ -354,7 +353,7 @@ class LowestStoryScore(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/html'
         self.response.out.write(template.render(path, temp_vals))
 ```
-*Figure 11: `LowestStoryScore` class to handle the form POST request*
+*Figure 11: class `LowestStoryScore` to handle the form POST request*
 
 
 ```python
@@ -402,7 +401,7 @@ class BestStoryProducerAVG(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/html'
         self.response.out.write(template.render(path, temp_vals))
 ```
-*Figure 15: `BestStoryProducerAVG` class to handle the form POST request*
+*Figure 15: class `BestStoryProducerAVG` to handle the form POST request*
 
 
 ```python
@@ -458,6 +457,34 @@ Figure 17 and 18 depict the UI at the client side before and after the query req
 #### Query D: List how many stories where posted by each author on nytimes.com and wired.com
 ***: TODO***
 
+#### Reset
+The feature `Reset` offers a complete cleanup. It removes the data set which is defined by `GOOG_DATASET_NAME` and recreate the data set under the project.
+
+Figure 19 and 20 show the implementations.
+
+```python
+class Reset(webapp2.RequestHandler):
+    """Performs a environment clean-up."""
+
+    def get(self):
+        hacker.reset()
+        self.redirect('/')
+```
+*Figure 19: class `Reset` to handle the client request*
+
+```python
+def reset():
+    bq = BigQuery()
+    bq.get_client()
+    ds = bq.get_dataset()
+    if ds.exists():
+        for t in ds.list_tables():
+            t.delete()
+        ds.reload()
+        ds.delete()
+    ds.create()
+```
+*Figure 20: `reset()` to remove and recreate the data set*
 
 ## Running the App
 This web app is development for [Google App Engine][goog_python_app_engine]. It can run locally without `Google Cloud Platform`'s `standard environment`.
