@@ -96,15 +96,15 @@ limitations under the License.
             <table class="table table-striped">
                 <tr>
                     <th>Author</th>
-                    <th># of Stories</th>
-                    <th>Company</th>
+                    <th>New York Times</th>
+                    <th>Wired</th>
                 </tr>
                 {% if values and active_tab == "QueryD" %}
-                    {% for author, cnt, company in values %}
+                    {% for row in values %}
                         <tr>
-                            <td>{{ author }}</td>
-                            <td>{{ cnt }}</td>
-                            <td>{{ company }}</td>
+                            <td>{{ row.0 }}</td>
+                            <td>{{ row.1 }}</td>
+                            <td>{{ row.2 }}</td>
                         </tr>
                     {% endfor %}
                 {% else %}
