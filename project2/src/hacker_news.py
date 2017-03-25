@@ -22,12 +22,43 @@ The controllers shall be implemented in other modules/classes.
 
 # built-in libs
 from string import Template
+from google.appengine.api import urlfetch
 # project home brews
 from settings import GOOG_PROJECT_ID, GOOG_DATASET_NAME, \
     GOOG_PUBLIC_DATA_PROJ_ID, GOOG_HACKER_NEWS_SOURCE, GOOG_HACKER_NEWS_TABLE_STORIES, GOOG_HACKER_NEWS_TABLE_FULL, \
     STORY_COUNT_TABLE_NAME, LOWEST_SCORE_TABLE_NAME, \
     BEST_STORY_URL_AVG_TABLE_NAME, STORY_COUNT_PER_AUTHOR
 from bigquery import BigQuery
+
+def get_Wired_and_NYtimes_Counts() :
+    sql = """
+      SELECT author, COUNT( REGEXP_EXTRACT(url, r'(.*nytimes\.com.*)')) AS nyTimesCount,
+        COUNT( REGEXP_EXTRACT(url, r'(.*wired\.com.*)')) AS wiredCount
+      FROM `$proj.$ds.$table`
+      WHERE author IS NOT NULL
+      GROUP BY author
+      HAVING nyTimesCount > 0 OR wiredCount > 0 """
+    sub = {
+        'proj': GOOG_PUBLIC_DATA_PROJ_ID,
+        'ds': GOOG_HACKER_NEWS_SOURCE,
+        'table': GOOG_HACKER_NEWS_TABLE_STORIES
+    }
+
+    bq = BigQuery()
+    bq.get_client()
+    bq.transfer_from_query(STORY_COUNT_PER_AUTHOR, Template(sql).substitute(sub))
+
+    # fetch the data from the saving table
+    sql = """
+             SELECT *
+             FROM $ds.$table
+           """
+    sub = {
+        'ds': GOOG_DATASET_NAME,
+        'table': STORY_COUNT_PER_AUTHOR,
+    }
+    urlfetch.set_default_fetch_deadline(60)
+    return bq.async_query(Template(sql).substitute(sub))
 
 
 def get_story_count():
