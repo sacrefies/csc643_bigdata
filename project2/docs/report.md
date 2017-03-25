@@ -42,37 +42,37 @@ limitations under the License.
 <div class="page-break"></div>
 
 ## Table of Content
-<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
-
 - [Project 2: Playing with Hacker News Data](#project-2-playing-with-hacker-news-data)
-	- [Table of Content](#table-of-content)
-	- [Introduction](#introduction)
-		- [License](#license)
-	- [Implementation](#implementation)
-		- [Database Connection](#database-connection)
-		- [Global Settings](#global-settings)
-		- [Features](#features)
-	- [Launch the App](#launch-the-app)
-		- [Prerequisites](#prerequisites)
-		- [Set Up](#set-up)
-		- [Run](#run)
-	- [About Team 1](#about-team-1)
-
-<!-- /TOC -->
-
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
+    - [Table of Content](#table-of-content)
+    - [Introduction](#introduction)
+        - [License](#license)
+    - [Implementation](#implementation)
+        - [Technical Architecture](#technical-architecture)
+            - [Overview](#overview)
+            - [Sequence Diagram](#sequence-diagram)
+        - [Settings](#settings)
+        - [Connecting to Hacker News Public Data Set](#connecting-to-hacker-news-public-data-set)
+        - [Functional Modules](#functional-modules)
+            - [Query A: Story Count](#query-a-story-count)
+            - [Query B: Stories Received the Lowest Score](#query-b-stories-received-the-lowest-score)
+            - [Query C: URLs that Produced the Best Stories on Average](#query-c-urls-that-produced-the-best-stories-on-average)
+            - [Query D: List how many stories where posted by each author on nytimes.com and wired.com](#query-d-list-how-many-stories-where-posted-by-each-author-on-nytimescom-and-wiredcom)
+    - [Running the App](#running-the-app)
+        - [Prerequisites](#prerequisites)
+            - [Google Cloud SDK and App Engine](#google-cloud-sdk-and-app-engine)
+            - [Python Libraries Required](#python-libraries-required)
+            - [Google Cloud Project](#google-cloud-project)
+        - [Configuration](#configuration)
+- [About Team 1](#about-team-1)
 
 ## Introduction
 This project is developed in Python. It is built on top of [WebApp2][webapp2] framework with the standard [Python Client API Libraries][goog_py_cli_api] to access to Google's backend public datasets.
 
 The application developed in this project allows web clients to process the following form-driven queries:
-+ a) How many stories are there?
-+ b) Which story has received the lowest score?
-+ c) On average which URL produced the best story in 2010?
-+ d) List how many stories where posted by each author on nytimes.com and wired.com.
++ How many stories are there?
++ Which story has received the lowest score?
++ On average which URL produced the best story in 2010?
++ List how many stories where posted by each author on nytimes.com and wired.com.
 
 *For team member contributions, see: [workload and responsibilities][ranking]*
 
@@ -80,12 +80,411 @@ The application developed in this project allows web clients to process the foll
 *Apache License V2.0* is applied to this project.
 
 ## Implementation
+This project implements a lightweight web application which is designed for [WebApp2][webapp2] framework and to be driven by [Google App Engine][goog_python_app_engine].
 
-### Connecting to Google BigQuery
+The implementation incorporates `Google Cloud BigQuery` library to execute some simple queries towards Google's public data set `Hacker News`, and display the query results on a HTML template.
 
-### Global Settings
+The source consists of 3 parts:
++ [x] A settings/configuration module to manage the global/customizable configurations
++ [x] A wrapper class `BigQuery` which provides major features to facilitate query execution. Such class masks out the complexity of library `google.cloud.bigquery`.
++ [x] A web application which conforms to the convention of [WebApp2][webapp2] and [Google App Engine][goog_python_app_engine], and which handles the requests from the web clients.
 
-### Features
+### Technical Architecture
+Exclusively, the architecture of this App is designed on top of and for [WebApp2][webapp2] and [Google App Engine][goog_python_app_engine].
+
+#### Overview
+![alt text](architeture.png "The project architecture")
+
+#### Sequence Diagram
+The following diagram example demonstrates how the post request is handled by this App.
+![alt text](sequence.png "The project architecture")
+
+### Settings
+To be able to connect to `Google BigQuery API`, the public data sets and developer's own data set, a set of environmental settings must be established, such as `project id`, `data set name`, `table name`, etc.
+
+In the implementation, this project employs a settings module to manage the variables. One can make simple changes to the settings module to adapt for their local reality. See figure 1 and 2 for the detail.
+
+```python
+"""This file is the base configuration which keeps the CONSTANTS."""
+
+# The source connection string for Hacker News
+GOOG_HACKER_NEWS_TABLE_FULL = r'full'
+GOOG_HACKER_NEWS_TABLE_STORIES = r'stories'
+GOOG_HACKER_NEWS_SOURCE = r'hacker_news'
+GOOG_PUBLIC_DATA_PROJ_ID = r'bigquery-public-data'
+# The google service secret variable name
+GOOG_CREDENTIALS_ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS'
+
+# The data table name
+STORY_COUNT_TABLE_NAME = 'table_a'
+LOWEST_SCORE_TABLE_NAME = 'table_b'
+BEST_STORY_URL_AVG_TABLE_NAME = 'table_c'
+STORY_COUNT_PER_AUTHOR = 'table_d'
+
+
+import os
+# To override base settings values
+# if some are redefined in the cust_settings.py
+from cust_settings import *
+
+# Create/set the environment variable for the google service credentials
+if GOOG_CREDENTIALS_ENV_VAR not in os.environ:
+    os.environ[GOOG_CREDENTIALS_ENV_VAR] = GOOG_CREDENTIALS_FILE_PATH
+
+```
+*Figure 1: `settings.py` to manage the rarely changing variables*
+
+```python
+"""This file includes variables for the values that configurable and changing.
+Developers shall keep their own versions locally for their own development environments.
+The variables will be set to different values for the runtime environment.
+"""
+
+# The google project id - Place your project id here
+GOOG_PROJECT_ID = r'<project_id>'
+# The google service credentials.
+GOOG_CREDENTIALS_FILE_PATH = r'<service_account_secret_json_file>'
+# The dataset name
+GOOG_DATASET_NAME = r'<dataset_id>'
+
+# Query related
+MAX_RESULT_COUNT = 100
+```
+*Figure 2: `cust_settings.py` to manage the frequently changing variables*
+
+### Connecting to Hacker News Public Data Set
+The connection to the `hacker news` public data set is managed by the class `BigQuery` which is enclosed by the `Python` source file `bigquery.py`.
+
+The method `get_client()`, as figure 3 shows, creates a `Google BigQuery API` client with the service credentials defined by the settings variables `GOOG_CREDENTIALS_ENV_VAR` and `GOOG_CREDENTIALS_FILE_PATH`. See the section [Configuration](#configuration) for more information.
+```python
+def get_client(self):
+    """Get a client of the bigquery service.
+
+    :return: An instance of the bigquery service client.
+    :rtype: bigquery.Client
+    """
+    self.__cli = self.__cli if self.__cli else bigquery.Client(self.__proj)
+    return self.__cli
+```
+*Figure 3: `get_client()` to create a `Google BigQuery Client` object.*
+
+A query can be executed in either synchronous or asynchronous way. Figure 4 shows the method `sync_query` and figure 5 shows the method `async_query`.
+```python
+def sync_query(self, query, params=()):
+    """Perform a query and return the result and the total count of the affected rows.
+    To use the parameters, please refer to the example below::
+        query_parameters=(
+            bigquery.ScalarQueryParameter('corpus', 'STRING', corpus),
+            bigquery.ScalarQueryParameter(
+                'min_word_count',
+                'INT64',
+                min_word_count))
+
+    :param query: A Standard SQL that Google BigQuery accepts.
+    :type query: str
+    :param params: (Optional) The parameters that the query uses.
+    :type params: tuple
+    :return: Returns the result set (only values) and the total count of the affected rows.
+    :rtype: tuple
+    """
+    self.__cli = self.get_client()
+    query_results = self.__cli.run_sync_query(query, query_parameters=params)
+
+    # Use standard SQL syntax for queries.
+    # See: https://cloud.google.com/bigquery/sql-reference/
+    query_results.use_legacy_sql = False
+    query_results.run()
+    # get all possible rows
+    pt = None
+    rs = []
+    while True:
+        row_data, total_rows, pt = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
+        rs += row_data
+        if not pt:
+            break
+
+    return rs, total_rows
+```
+*Figure 4: `sync_query` to run a query synchronously*
+
+```python
+def async_query(self, query, params=(), dest_table=None, dest_dataset=None):
+    """Perform a query *asynchronously* and return the result and the total count of the affected rows.
+
+    :param query: A Standard SQL that Google BigQuery accepts.
+    :type query: str
+    :param params: (Optional) The parameters that the query uses.
+    :type params: tuple
+    :param dest_table: (Optional) The name of the destination table where the job saves the result set.
+    :type dest_table: str
+    :param dest_dataset: (Optional) The name of the dataset which has the destination table.
+                        If omitted, ``GOOG_DATASET_NAME`` is used by default.
+    :type dest_dataset: str
+    :return: Returns the result set (only values) and the total count of the affected rows.
+    :rtype: tuple
+    """
+    self.__cli = self.get_client()
+    query_job = self.__cli.run_async_query(str(uuid.uuid4()), query, query_parameters=params)
+    query_job.use_legacy_sql = False
+    if dest_table:
+        ds = self.__cli.dataset(dest_dataset) if dest_dataset else self.get_dataset()
+        tbl_save = ds.table(dest_table)
+        query_job.destination = tbl_save
+        query_job.write_disposition = 'WRITE_TRUNCATE' if tbl_save.exists() else 'WRITE_EMPTY'
+
+    query_job.begin()
+    # wait for the job complete
+    self.__async_wait(query_job)
+
+    # Drain the query results by requesting a page at a time.
+    query_results = query_job.results()
+    rs = []
+    pt = None
+    while True:
+        row_data, total_rows, page_token = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
+        rs += row_data
+        if not page_token:
+            break
+
+    return rs, total_rows
+```
+*Figure 5: `async_query` to run a query asynchronously*
+
+The `BigQuery` class also provides a function `build_params()` to construct simple parameters for a parameterized query. Figure 6 shows how the parameters are built.
+```python
+@classmethod
+def build_params(cls, params):
+    """Construct a tuple of the SQL parameters.
+
+    `Note: this function produce scalar parameters only.`
+
+    :param params: A ``python`` ``dict`` which holds the parameters
+                   in form of {'name': value} where the value can be any object.
+    :type params: dict
+    :return: Returns a tuple of SQL parameter objects
+    :rtype: tuple
+    """
+    if not params:
+        return None
+
+    def get_type(k, v):
+        t = 'STRING'
+        if isinstance(v, int):
+            t = 'INT64'
+        elif isinstance(v, float):
+            t = 'FLOAT64'
+        elif isinstance(v, bool):
+            t = 'BOOL'
+        return bigquery.ScalarQueryParameter(k, t, v)
+
+    return tuple([get_type(key, value) for key, value in params.iteritems()])
+```
+*Figure 6: `build_params()` to construct parameters*
+
+### Functional Modules
+While the `BigQuery` class acts as the fundamental module, The queries and client requests are handled by the functional modules. The module `hacker_news.py` includes functions to run the queries that are asked by the requirements; The view controller modules incorporates [WebApp2][webapp2] framework to handle the requests and responses.
+
+#### Query A: Story Count
+This query's request is sent by a HTML form and is handled by the view class `TotalStoryCount`, and the query is executed by the function `get_story_count()` in `hacker_news.py`.
+
+Figure 7 and 8 show the implementations.
+
+```python
+class TotalStoryCount(webapp2.RequestHandler):
+    def post(self):
+        rows = hacker.get_story_count()
+        temp_vals = {
+            'active_tab': 'QueryA',
+            'values': rows if rows else None
+        }
+        path = os.path.join(os.path.dirname(__file__), 'index.html')
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write(template.render(path, temp_vals))
+
+```
+*Figure 7: class `TotalStoryCount` to handle the form POST request*
+
+
+```python
+def get_story_count():
+    sql = """
+        SELECT COUNT(id) AS storyCount
+        FROM `$proj.$ds.$table`
+    """
+    sub = {
+        'proj': GOOG_PUBLIC_DATA_PROJ_ID,
+        'ds': GOOG_HACKER_NEWS_SOURCE,
+        'table': GOOG_HACKER_NEWS_TABLE_STORIES
+    }
+
+    bq = BigQuery()
+    bq.get_client()
+    return bq.async_query(Template(sql).substitute(sub), params=(), dest_table=STORY_COUNT_TABLE_NAME)[0]
+
+```
+*Figure 8: `get_story_count()` to run the query*
+
+Figure 9 and 10 depict the UI at the client side before and after the query request.
+
+![alt_text](story_count_before.png "Before the request")
+*Figure 9: UI before user clicks on `Get Result`*
+
+![alt_text](story_count_after.png "After the request")
+*Figure 10: UI after user clicks on `Get Result`*
+
+#### Query B: Stories Received the Lowest Score
+This query's request is sent by a HTML form and is handled by the view class `LowestStoryScore`, and the query is executed by the function `get_lowest_story_score()` in `hacker_news.py`.
+
+Due to API result fetching timeout issue, the function `get_lowest_story_score()` gets only `MAX_RESULT_COUNT` number of result records. For instance, it's `100` that is set shown by figure 14.
+
+Figure 11 and 12 show the implementations.
+
+```python
+class LowestStoryScore(webapp2.RequestHandler):
+    def post(self):
+        rows, count = hacker.get_lowest_story_score()
+        temp_vals = {
+            'active_tab': 'QueryB',
+            'total_count': count,
+            'page_size': MAX_RESULT_COUNT,
+            'values': rows if rows else None
+        }
+        path = os.path.join(os.path.dirname(__file__), 'index.html')
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write(template.render(path, temp_vals))
+```
+*Figure 11: class `LowestStoryScore` to handle the form POST request*
+
+
+```python
+def get_lowest_story_score():
+    sql = """
+        SELECT score, title, url, author
+        FROM `$proj.$ds.$table`
+        WHERE score is not null
+        AND score <= (SELECT MIN(score) FROM `$proj.$ds.$table`)
+    """
+    sub = {
+        'proj': GOOG_PUBLIC_DATA_PROJ_ID,
+        'ds': GOOG_HACKER_NEWS_SOURCE,
+        'table': GOOG_HACKER_NEWS_TABLE_STORIES
+    }
+
+    bq = BigQuery()
+    bq.get_client()
+    return bq.async_query_limited(Template(sql).substitute(sub), dest_table=LOWEST_SCORE_TABLE_NAME)
+```
+*Figure 12: `get_lowest_story_score()` to run the query*
+
+Figure 13 and 14 depict the UI at the client side before and after the query request.
+
+![alt_text](story_lowest_score_before.png "Before the request")
+*Figure 13: UI before user clicks on `Get Result`*
+
+![alt_text](story_lowest_score_after.png "After the request")
+*Figure 14: UI after user clicks on `Get Result`*
+
+#### Query C: URLs that Produced the Best Stories on Average
+This query's request is sent by a HTML form and is handled by the view class `BestStoryProducerAVG`, and the query is executed by the function `best_story_producer_on_avg()` in `hacker_news.py`.
+
+Figure 15 and 16 show the implementations.
+
+```python
+class BestStoryProducerAVG(webapp2.RequestHandler):
+    def post(self):
+        rows = hacker.best_story_producer_on_avg()
+        temp_vals = {
+            'active_tab': 'QueryC',
+            'values': rows if rows else None
+        }
+        path = os.path.join(os.path.dirname(__file__), 'index.html')
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write(template.render(path, temp_vals))
+```
+*Figure 15: class `BestStoryProducerAVG` to handle the form POST request*
+
+
+```python
+def best_story_producer_on_avg():
+    sql = """
+        SELECT url, AVG(score) AS avgScore
+        FROM `$proj.$ds.$table`
+        WHERE
+            TYPE = @type
+        AND TIMESTAMP <= @end_date
+        AND TIMESTAMP >= @start_date
+        GROUP BY url
+        HAVING avgScore >= (
+          SELECT AVG(score) AS score
+          FROM `$proj.$ds.$table`
+          WHERE
+              TYPE = @type
+          AND url IS NOT NULL
+          AND url <> ''
+          AND TIMESTAMP <= @end_date
+          AND TIMESTAMP >= @start_date
+          GROUP BY url
+          ORDER BY score DESC
+          LIMIT 1 )
+          ORDER BY avgScore DESC
+    """
+    sub = {
+        'proj': GOOG_PUBLIC_DATA_PROJ_ID,
+        'ds': GOOG_HACKER_NEWS_SOURCE,
+        'table': GOOG_HACKER_NEWS_TABLE_FULL
+    }
+    params = {
+        'type': 'story',
+        'start_date': '2010-01-01 00:00:01',
+        'end_date': '2010-12-31 23:59:59'
+    }
+    p = BigQuery.build_params(params)
+
+    bq = BigQuery()
+    bq.get_client()
+    return bq.async_query(Template(sql).substitute(sub), p, BEST_STORY_URL_AVG_TABLE_NAME)[0]
+```
+*Figure 16: `best_story_producer_on_avg()` to run the query*
+
+Figure 17 and 18 depict the UI at the client side before and after the query request.
+
+![alt_text](url_avg_best_before.png "Before the request")
+*Figure 17: UI before user clicks on `Get Result`*
+
+![alt_text](url_avg_best_after.png "After the request")
+*Figure 18: UI after user clicks on `Get Result`*
+
+#### Query D: List how many stories where posted by each author on nytimes.com and wired.com
+***: TODO***
+
+#### Reset
+The feature `Reset` offers a complete cleanup. It removes the data set which is defined by `GOOG_DATASET_NAME` and recreate the data set under the project.
+
+Figure 19 and 20 show the implementations.
+
+```python
+class Reset(webapp2.RequestHandler):
+    """Performs a environment clean-up."""
+
+    def get(self):
+        hacker.reset()
+        self.redirect('/')
+```
+*Figure 19: class `Reset` to handle the client request*
+
+```python
+def reset():
+    bq = BigQuery()
+    bq.get_client()
+    ds = bq.get_dataset()
+    if ds.exists():
+        for t in ds.list_tables():
+            t.delete()
+        ds.reload()
+        ds.delete()
+    ds.create()
+```
+*Figure 20: `reset()` to remove and recreate the data set*
 
 ## Running the App
 This web app is development for [Google App Engine][goog_python_app_engine]. It can run locally without `Google Cloud Platform`'s `standard environment`.

@@ -16,8 +16,8 @@
 #
 
 
-"""This module includes view controller class for the query A:
-  - How many stories are there?
+"""This module includes view controller class for the query c:
+  - On average which URL produced the best story in 2010?
 """
 
 # built-in libs
@@ -27,13 +27,16 @@ import webapp2
 from google.appengine.ext.webapp import template
 # homemade ones
 import hacker_news as hacker
+from settings import MAX_RESULT_COUNT
 
 
-class TotalStoryCount(webapp2.RequestHandler):
+class LowestStoryScore(webapp2.RequestHandler):
     def post(self):
-        rows = hacker.get_story_count()
+        rows, count = hacker.get_lowest_story_score()
         temp_vals = {
-            'active_tab': 'QueryA',
+            'active_tab': 'QueryB',
+            'total_count': count,
+            'page_size': MAX_RESULT_COUNT,
             'values': rows if rows else None
         }
         path = os.path.join(os.path.dirname(__file__), 'index.html')

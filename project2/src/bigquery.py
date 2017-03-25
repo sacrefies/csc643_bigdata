@@ -198,7 +198,7 @@ class BigQuery(object):
         rs = []
         while True:
             row_data, total_rows, page_token = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
-            rs += [row for row in row_data]
+            rs += row_data
             if not page_token:
                 break
 
@@ -263,6 +263,7 @@ class BigQuery(object):
 
         query_job.begin()
         # wait for the job complete
+
         BigQuery.__async_wait(self, query_job)
 
         # Drain the query results by requesting a page at a time.
@@ -271,11 +272,66 @@ class BigQuery(object):
         pt = None
         while True:
             row_data, total_rows, page_token = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
-            rs += [row for row in row_data]
+            # rs += [row for row in row_data]
+            rs += row_data
             if not page_token:
                 break
 
         return rs, total_rows
+
+    def async_query_limited(self, query, params=(), dest_table=None, dest_dataset=None):
+        """Perform a query *asynchronously* and only return the first ``MAX_RESULT_COUNT`` number of rows
+         and the total count of the affected rows.
+
+                To use the parameters, please refer to the example below::
+
+                    params = {
+                        'name': 'John',
+                        'age': 21,
+                        'married': False
+                    }
+                    converted_params = BigQuery.build_params(params)
+                    sql = \"""
+                        SELECT *
+                        FROM %s
+                        WHERE name = @name
+                        AND   age = @age
+                        AND   is_married = @married
+                        LIMIT %d
+                    \""" % ('`mydataset.sometable`', 10)
+                    bq = BigQuery()
+                    bq.get_client()
+                    rs, total = bq.async_query_limited(query, converted_params)
+
+                :param query: A Standard SQL that Google BigQuery accepts.
+                :type query: str
+                :param params: (Optional) The parameters that the query uses.
+                :type params: tuple
+                :param dest_table: (Optional) The name of the destination table where the job saves the result set.
+                :type dest_table: str
+                :param dest_dataset: (Optional) The name of the dataset which has the destination table.
+                                    If omitted, ``GOOG_DATASET_NAME`` is used by default.
+                :type dest_dataset: str
+                :return: Returns the result set (only values) and the total count of the affected rows.
+                :rtype: tuple
+                """
+        self.__cli = self.get_client()
+        query_job = self.__cli.run_async_query(str(uuid.uuid4()), query, query_parameters=params)
+        query_job.use_legacy_sql = False
+        if dest_table:
+            ds = self.__cli.dataset(dest_dataset) if dest_dataset else self.get_dataset()
+            tbl_save = ds.table(dest_table)
+            query_job.destination = tbl_save
+            query_job.write_disposition = 'WRITE_TRUNCATE' if tbl_save.exists() else 'WRITE_EMPTY'
+
+        query_job.begin()
+        # wait for the job complete
+        self.__async_wait(query_job)
+
+        # Drain the query results by requesting a page at a time.
+        query_results = query_job.results()
+        row_data, total_rows, page_token = query_results.fetch_data(MAX_RESULT_COUNT, page_token=None)
+        return row_data, total_rows
 
     def transfer_from_query(self, dest_table, query, params=(), dest_dataset=None):
         """Run the given query, save the query result set into the destination table.
@@ -303,20 +359,6 @@ class BigQuery(object):
         trans_job = self.__cli.run_async_query(str(uuid.uuid4()), query, query_parameters=params)
         trans_job.use_legacy_sql = False
         trans_job.destination = tbl_save
-
-        # configuration.copy.writeDisposition
-        # string [Optional] Specifies the action that occurs if the destination table already exists.
-        #
-        # The following values are supported:
-        #
-        # WRITE_TRUNCATE: If the table already exists, BigQuery overwrites the table data.
-        # WRITE_APPEND: If the table already exists, BigQuery appends the data to the table.
-        # WRITE_EMPTY: If the table already exists and contains data, a 'duplicate' error is returned in the job result.
-        #
-        # The default value is WRITE_EMPTY.
-        #
-        # Each action is atomic and only occurs if BigQuery is able to complete the job successfully.
-        # Creation, truncation and append actions occur as one atomic update upon job completion.
         trans_job.write_disposition = 'WRITE_TRUNCATE' if tbl_save.exists() else 'WRITE_EMPTY'
 
         trans_job.begin()

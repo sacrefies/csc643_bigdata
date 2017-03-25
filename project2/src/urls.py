@@ -25,6 +25,7 @@ ROUTES = [
     (r'/reset', 'reset.Reset'),
     (r'/authorKPI', 'story_count_by_author_producer.StoryCountByAuthorProducer'),
     (r'/storyCount', 'total_story_producer.TotalStoryProducer'),
+    (r'/lowestScoreStory', 'lowest_story_score.LowestStoryScore'),
     (r'/avgBestStoryProducer', 'avg_best_story_producer.BestStoryProducerAVG'),
-    (r'/', 'index.MainHandler'),
+    (r'/', 'index.MainHandler')
 ]

@@ -35,14 +35,13 @@ limitations under the License.
             <form action="/storyCount" name="frmStoryCount" id="frmStoryCount" method="POST">
                 <input type="submit" class="btn btn-default" value="Get Result" id="submitFrmStoryCount"/>
             </form>
-            <p>
-                <!-- form for query a ends-->
-                {% if values and active_tab == "QueryA" %}
-                    {{ values.0.0 }}
-                {% else %}
-                    Please use "Get Result" to show the data.
-                {% endif %}
-            </p>
+            <!-- form for query a ends-->
+            <p>&nbsp;</p>
+            {% if values and active_tab == "QueryA" %}
+                Story Count: {{ values.0.0 }}
+            {% else %}
+                Please use "Get Result" to show the data.
+            {% endif %}
         </div>
         <div id="tabQueryB" class="tab-pane fade">
             <h3>Which story has received the lowest score?</h3>
@@ -51,16 +50,42 @@ limitations under the License.
                 <input type="submit" class="btn btn-default" value="Get Result"/>
             </form>
             <!-- form for query b ends-->
-            <p>
-                <!-- form for query a ends-->
+            <p>&nbsp;</p>
+            <table class="table table-striped">
+                <thead>
                 {% if values and active_tab == "QueryB" %}
-                    {% for v in values %}
-                        {{ v }}
+                    <tr>
+                        <th colspan="4">This table displays {{ page_size }} rows from the result set because fetching
+                            a large result set causes API timeout issue.
+                        </th>
+                    <tr>
+                        <th colspan="4">Total: {{ total_count }} rows | Displaying: {{ page_size }} rows</th>
+                    </tr>
+                {% endif %}
+                <tr>
+                    <th>SCORE</th>
+                    <th>TITLE</th>
+                    <th>URL</th>
+                    <th>AUTHOR</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if values and active_tab == "QueryB" %}
+                    {% for row in values %}
+                        <tr>
+                            <td>{{ row.0 }}</td>
+                            <td>{{ row.1 }}</td>
+                            <td>{{ row.2 }}</td>
+                            <td>{{ row.3 }}</td>
+                        </tr>
                     {% endfor %}
                 {% else %}
-                    Please use "Get Result" to show the data.
+                    <tr>
+                        <td colspan="4">Please use "Get Result" to show the data.</td>
+                    </tr>
                 {% endif %}
-            </p>
+                </tbody>
+            </table>
         </div>
         <div id="tabQueryC" class="tab-pane fade">
             <h3>On average which URL produced the best story in 2010?</h3>
@@ -69,11 +94,15 @@ limitations under the License.
                 <input type="submit" class="btn btn-default" value="Get Result"/>
             </form>
             <!-- form for query c ends-->
+            <p>&nbsp;</p>
             <table class="table table-striped">
+                <thead>
                 <tr>
-                    <th>URL ({{ active_tab }})</th>
+                    <th>URL</th>
                     <th>AVG SCORE</th>
                 </tr>
+                </thead>
+                <tbody>
                 {% if values and active_tab == "QueryC" %}
                     {% for row in values %}
                         <tr>
@@ -82,8 +111,11 @@ limitations under the License.
                         </tr>
                     {% endfor %}
                 {% else %}
-                    Please use "Get Result" to show the data.
+                    <tr>
+                        <td colspan="2">Please use "Get Result" to show the data.</td>
+                    </tr>
                 {% endif %}
+                </tbody>
             </table>
         </div>
         <div id="tabQueryD" class="tab-pane fade">
@@ -93,6 +125,7 @@ limitations under the License.
                 <input type="submit" class="btn btn-default" value="Get Result"/>
             </form>
             <!-- form for query d ends-->
+            <p>&nbsp;</p>
             <table class="table table-striped">
                 <tr>
                     <th>Author</th>
