@@ -107,7 +107,7 @@ To be able to connect to `Google BigQuery API`, the public data sets and develop
 In the implementation, this project employs a settings module to manage the variables. One can make simple changes to the settings module to adapt for their local reality. See figures 1 and 2 for details.
 
 ```python
-"""This file is the base configuration which keeps the CONSTANTS."""
+"""This file is the base configuration that keeps the CONSTANTS."""
 
 # The source connection string for Hacker News
 GOOG_HACKER_NEWS_TABLE_FULL = r'full'
