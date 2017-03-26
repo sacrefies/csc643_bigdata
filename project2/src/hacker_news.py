@@ -22,43 +22,59 @@ The controllers shall be implemented in other modules/classes.
 
 # built-in libs
 from string import Template
-from google.appengine.api import urlfetch
 # project home brews
-from settings import GOOG_PROJECT_ID, GOOG_DATASET_NAME, \
-    GOOG_PUBLIC_DATA_PROJ_ID, GOOG_HACKER_NEWS_SOURCE, GOOG_HACKER_NEWS_TABLE_STORIES, GOOG_HACKER_NEWS_TABLE_FULL, \
-    STORY_COUNT_TABLE_NAME, LOWEST_SCORE_TABLE_NAME, \
-    BEST_STORY_URL_AVG_TABLE_NAME, STORY_COUNT_PER_AUTHOR
+from settings import GOOG_PUBLIC_DATA_PROJ_ID, GOOG_HACKER_NEWS_SOURCE, \
+    GOOG_HACKER_NEWS_TABLE_STORIES, GOOG_HACKER_NEWS_TABLE_FULL, \
+    STORY_COUNT_TABLE_NAME, LOWEST_SCORE_TABLE_NAME, BEST_STORY_URL_AVG_TABLE_NAME, STORY_COUNT_PER_AUTHOR
 from bigquery import BigQuery
 
-def get_Wired_and_NYtimes_Counts() :
+
+def get_wired_and_nyt_counts():
+    nested = """
+    SELECT author, COUNT(id) AS $column
+    FROM `$proj.$ds.$table`
+    WHERE
+        author IS NOT NULL
+    AND url IS NOT NULL
+    AND REGEXP_CONTAINS(url, r'$regexp')
+    GROUP BY author
+    """
+
     sql = """
-      SELECT author, COUNT( REGEXP_EXTRACT(url, r'(.*nytimes\.com.*)')) AS nyTimesCount,
-        COUNT( REGEXP_EXTRACT(url, r'(.*wired\.com.*)')) AS wiredCount
-      FROM `$proj.$ds.$table`
-      WHERE author IS NOT NULL
-      GROUP BY author
-      HAVING nyTimesCount > 0 OR wiredCount > 0 """
-    sub = {
+    SELECT
+      wired.author AS author,
+      wired.$wired_col AS on_wired_com,
+      nytimes.$nyt_col AS on_nytimes_com
+    FROM ($wired) wired
+    JOIN ($nyt) nytimes ON wired.author = nytimes.author
+    ORDER BY author
+    """
+    sub_wired = {
         'proj': GOOG_PUBLIC_DATA_PROJ_ID,
         'ds': GOOG_HACKER_NEWS_SOURCE,
-        'table': GOOG_HACKER_NEWS_TABLE_STORIES
+        'table': GOOG_HACKER_NEWS_TABLE_STORIES,
+        'column': 'on_wired_com',
+        'regexp': r'wired\.com'
+    }
+
+    sub_nyt = {
+        'proj': GOOG_PUBLIC_DATA_PROJ_ID,
+        'ds': GOOG_HACKER_NEWS_SOURCE,
+        'table': GOOG_HACKER_NEWS_TABLE_STORIES,
+        'column': 'on_nytimes_com',
+        'regexp': r'nytimes\.com'
+    }
+
+    sub = {
+        'wired': Template(nested).substitute(sub_wired),
+        'nyt': Template(nested).substitute(sub_nyt),
+        'nyt_col': 'on_nytimes_com',
+        'wired_col': 'on_wired_com',
     }
 
     bq = BigQuery()
     bq.get_client()
-    bq.transfer_from_query(STORY_COUNT_PER_AUTHOR, Template(sql).substitute(sub))
-
-    # fetch the data from the saving table
-    sql = """
-             SELECT *
-             FROM $ds.$table
-           """
-    sub = {
-        'ds': GOOG_DATASET_NAME,
-        'table': STORY_COUNT_PER_AUTHOR,
-    }
-    urlfetch.set_default_fetch_deadline(60)
-    return bq.async_query(Template(sql).substitute(sub))
+    return bq.async_query(Template(sql).substitute(sub), params=(), dest_table=STORY_COUNT_PER_AUTHOR)
 
 
 def get_story_count():
@@ -92,7 +108,7 @@ def get_lowest_story_score():
 
     bq = BigQuery()
     bq.get_client()
-    return bq.async_query_limited(Template(sql).substitute(sub), dest_table=LOWEST_SCORE_TABLE_NAME)
+    return bq.async_query(Template(sql).substitute(sub), dest_table=LOWEST_SCORE_TABLE_NAME)
 
 
 def best_story_producer_on_avg():

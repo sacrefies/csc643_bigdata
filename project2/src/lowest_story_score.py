@@ -36,7 +36,6 @@ class LowestStoryScore(webapp2.RequestHandler):
         temp_vals = {
             'active_tab': 'QueryB',
             'total_count': count,
-            'page_size': MAX_RESULT_COUNT,
             'values': rows if rows else None
         }
         path = os.path.join(os.path.dirname(__file__), 'index.html')

@@ -36,8 +36,10 @@ import os
 # To override base settings values
 # if some are redefined in the cust_settings.py
 from cust_settings import *
+from google.appengine.api import urlfetch
 
 # Create/set the environment variable for the google service credentials
 if GOOG_CREDENTIALS_ENV_VAR not in os.environ:
     os.environ[GOOG_CREDENTIALS_ENV_VAR] = GOOG_CREDENTIALS_FILE_PATH
 
+urlfetch.set_default_fetch_deadline(GOOG_API_FETCH_TIMEOUT)

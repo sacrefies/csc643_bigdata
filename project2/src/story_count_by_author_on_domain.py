@@ -29,11 +29,12 @@ from google.appengine.ext.webapp import template
 import hacker_news as hacker
 
 
-class StoryCountByAuthorProducer(webapp2.RequestHandler):
+class StoryCountByAuthorOnDomain(webapp2.RequestHandler):
     def post(self):
-        rows = hacker.get_Wired_and_NYtimes_Counts()
+        rows, count = hacker.get_wired_and_nyt_counts()
         temp_vals = {
             'active_tab': 'QueryD',
+            'total_count': count,
             'values': rows if rows else None
         }
         path = os.path.join(os.path.dirname(__file__), 'index.html')

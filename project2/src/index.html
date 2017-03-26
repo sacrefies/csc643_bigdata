@@ -38,7 +38,7 @@ limitations under the License.
             <!-- form for query a ends-->
             <p>&nbsp;</p>
             {% if values and active_tab == "QueryA" %}
-                Story Count: {{ values.0.0 }}
+                Story Count: <strong>{{ values.0.0 }}</strong>
             {% else %}
                 Please use "Get Result" to show the data.
             {% endif %}
@@ -55,11 +55,7 @@ limitations under the License.
                 <thead>
                 {% if values and active_tab == "QueryB" %}
                     <tr>
-                        <th colspan="4">This table displays {{ page_size }} rows from the result set because fetching
-                            a large result set causes API timeout issue.
-                        </th>
-                    <tr>
-                        <th colspan="4">Total: {{ total_count }} rows | Displaying: {{ page_size }} rows</th>
+                        <th colspan="4">Total: {{ total_count }} | Displaying: {{ total_count }}</th>
                     </tr>
                 {% endif %}
                 <tr>
@@ -127,11 +123,19 @@ limitations under the License.
             <!-- form for query d ends-->
             <p>&nbsp;</p>
             <table class="table table-striped">
+                <thead>
+                {% if values and active_tab == "QueryD" %}
+                    <tr>
+                        <th colspan="3">Total: {{ total_count }} | Displaying: {{ total_count }}</th>
+                    </tr>
+                {% endif %}
                 <tr>
                     <th>Author</th>
-                    <th>New York Times</th>
                     <th>Wired</th>
+                    <th>New York Times</th>
                 </tr>
+                </thead>
+                <tbody>
                 {% if values and active_tab == "QueryD" %}
                     {% for row in values %}
                         <tr>
@@ -141,8 +145,11 @@ limitations under the License.
                         </tr>
                     {% endfor %}
                 {% else %}
-                    Please use "Get Result" to show the data.
+                    <tr>
+                        <td colspan="3">Please use "Get Result" to show the data.</td>
+                    </tr>
                 {% endif %}
+                </tbody>
             </table>
         </div>
     </div>

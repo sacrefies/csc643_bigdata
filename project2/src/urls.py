@@ -23,8 +23,8 @@
 ROUTES = [
     # (route/path, handler class full name)
     (r'/reset', 'reset.Reset'),
-    (r'/authorKPI', 'story_count_by_author_producer.StoryCountByAuthorProducer'),
-    (r'/storyCount', 'total_story_producer.TotalStoryProducer'),
+    (r'/authorKPI', 'story_count_by_author_on_domain.StoryCountByAuthorOnDomain'),
+    (r'/storyCount', 'total_story_producer.TotalStoryCount'),
     (r'/lowestScoreStory', 'lowest_story_score.LowestStoryScore'),
     (r'/avgBestStoryProducer', 'avg_best_story_producer.BestStoryProducerAVG'),
     (r'/', 'index.MainHandler')
