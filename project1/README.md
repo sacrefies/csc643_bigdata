@@ -2,6 +2,8 @@
 This project is a experimental project which works with MongoDB.
 All source is implemented in Python 2.7.
 
+See the [project report] for detail.
+
 # To Run
 
 ## Initialization

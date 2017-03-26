@@ -8,8 +8,8 @@ This team consists of 3 team members.
 * Jason Meng
 
 # Projects
-- [x] [Project 1: A MongoDB NOSQL Exercise](project1/README.md "Project 1 Home")
-- [ ] [Project 2: A Google BigQuery Exercise](project2/README.md "Project 2 Home")
+1. [x] [Project 1: A MongoDB NOSQL Exercise](project1/README.md "Project 1 Home")
+1. [x] [Project 2: A Google BigQuery Exercise](project2/README.md "Project 2 Home")
 
 
 # License
