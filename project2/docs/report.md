@@ -56,13 +56,15 @@ limitations under the License.
             - [Query A: Story Count](#query-a-story-count)
             - [Query B: Stories Received the Lowest Score](#query-b-stories-received-the-lowest-score)
             - [Query C: URLs that Produced the Best Stories on Average](#query-c-urls-that-produced-the-best-stories-on-average)
-            - [Query D: List how many stories where posted by each author on nytimes.com and wired.com](#query-d-list-how-many-stories-where-posted-by-each-author-on-nytimescom-and-wiredcom)
+            - [Query D: Story Count by Author on NYTimes.com and Wired.com](#query-d-story-count-by-author-on-nytimescom-and-wiredcom)
+            - [Reset](#reset)
     - [Running the App](#running-the-app)
         - [Prerequisites](#prerequisites)
             - [Google Cloud SDK and App Engine](#google-cloud-sdk-and-app-engine)
             - [Python Libraries Required](#python-libraries-required)
             - [Google Cloud Project](#google-cloud-project)
         - [Configuration](#configuration)
+        - [Launching The App](#launching-the-app)
 - [About Team 1](#about-team-1)
 
 ## Introduction
@@ -126,11 +128,13 @@ import os
 # To override base settings values
 # if some are redefined in the cust_settings.py
 from cust_settings import *
+from google.appengine.api import urlfetch
 
 # Create/set the environment variable for the google service credentials
 if GOOG_CREDENTIALS_ENV_VAR not in os.environ:
     os.environ[GOOG_CREDENTIALS_ENV_VAR] = GOOG_CREDENTIALS_FILE_PATH
 
+urlfetch.set_default_fetch_deadline(GOOG_API_FETCH_TIMEOUT)
 ```
 *Figure 1: `settings.py` to manage the rarely changing variables*
 
@@ -148,14 +152,16 @@ GOOG_CREDENTIALS_FILE_PATH = r'<service_account_secret_json_file>'
 GOOG_DATASET_NAME = r'<dataset_id>'
 
 # Query related
-MAX_RESULT_COUNT = 100
+MAX_RESULT_COUNT = 500
+# Google API timeout
+GOOG_API_FETCH_TIMEOUT = 120
 ```
 *Figure 2: `cust_settings.py` to manage the frequently changing variables*
 
 ### Connecting to Hacker News Public Data Set
 The connection to the `hacker news` public data set is managed by the class `BigQuery` which is enclosed by the `Python` source file `bigquery.py`.
 
-The method `get_client()`, as figure 3 shows, creates a `Google BigQuery API` client with the service credentials defined by the settings variables `GOOG_CREDENTIALS_ENV_VAR` and `GOOG_CREDENTIALS_FILE_PATH`. See the section [Configuration](#configuration) for more information.
+The method `get_client()`, as figure 3 shows, creates a `Google BigQuery API` client with the service credentials defined by the settings variables `GOOG_CREDENTIALS_ENV_VAR` and `GOOG_CREDENTIALS_FILE_PATH`. See the section [Settings](#settings) and [Configuration](#configuration) for more information.
 ```python
 def get_client(self):
     """Get a client of the bigquery service.
@@ -346,7 +352,6 @@ class LowestStoryScore(webapp2.RequestHandler):
         temp_vals = {
             'active_tab': 'QueryB',
             'total_count': count,
-            'page_size': MAX_RESULT_COUNT,
             'values': rows if rows else None
         }
         path = os.path.join(os.path.dirname(__file__), 'index.html')
@@ -372,7 +377,7 @@ def get_lowest_story_score():
 
     bq = BigQuery()
     bq.get_client()
-    return bq.async_query_limited(Template(sql).substitute(sub), dest_table=LOWEST_SCORE_TABLE_NAME)
+    return bq.async_query(Template(sql).substitute(sub), dest_table=LOWEST_SCORE_TABLE_NAME)
 ```
 *Figure 12: `get_lowest_story_score()` to run the query*
 
@@ -454,13 +459,89 @@ Figure 17 and 18 depict the UI at the client side before and after the query req
 ![alt_text](url_avg_best_after.png "After the request")
 *Figure 18: UI after user clicks on `Get Result`*
 
-#### Query D: List how many stories where posted by each author on nytimes.com and wired.com
-***: TODO***
+#### Query D: Story Count by Author on NYTimes.com and Wired.com
+This query's request is sent by a HTML form and is handled by the view class `BestStoryProducerAVG`, and the query is executed by the function `best_story_producer_on_avg()` in `hacker_news.py`.
+
+Figure 19 and 20 show the implementations.
+
+```python
+class StoryCountByAuthorOnDomain(webapp2.RequestHandler):
+    def post(self):
+        rows, count = hacker.get_wired_and_nyt_counts()
+        temp_vals = {
+            'active_tab': 'QueryD',
+            'total_count': count,
+            'values': rows if rows else None
+        }
+        path = os.path.join(os.path.dirname(__file__), 'index.html')
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write(template.render(path, temp_vals))
+```
+*Figure 19: class `StoryCountByAuthorOnDomain` to handle the form POST request*
+
+
+```python
+def get_wired_and_nyt_counts():
+    nested = """
+    SELECT author, COUNT(id) AS $column
+    FROM `$proj.$ds.$table`
+    WHERE
+        author IS NOT NULL
+    AND url IS NOT NULL
+    AND REGEXP_CONTAINS(url, r'$regexp')
+    GROUP BY author
+    """
+
+    sql = """
+    SELECT
+      wired.author AS author,
+      wired.$wired_col AS on_wired_com,
+      nytimes.$nyt_col AS on_nytimes_com
+    FROM ($wired) wired
+    JOIN ($nyt) nytimes ON wired.author = nytimes.author
+    ORDER BY author
+    """
+    sub_wired = {
+        'proj': GOOG_PUBLIC_DATA_PROJ_ID,
+        'ds': GOOG_HACKER_NEWS_SOURCE,
+        'table': GOOG_HACKER_NEWS_TABLE_STORIES,
+        'column': 'on_wired_com',
+        'regexp': r'wired\.com'
+    }
+
+    sub_nyt = {
+        'proj': GOOG_PUBLIC_DATA_PROJ_ID,
+        'ds': GOOG_HACKER_NEWS_SOURCE,
+        'table': GOOG_HACKER_NEWS_TABLE_STORIES,
+        'column': 'on_nytimes_com',
+        'regexp': r'nytimes\.com'
+    }
+
+    sub = {
+        'wired': Template(nested).substitute(sub_wired),
+        'nyt': Template(nested).substitute(sub_nyt),
+        'nyt_col': 'on_nytimes_com',
+        'wired_col': 'on_wired_com',
+    }
+
+    bq = BigQuery()
+    bq.get_client()
+    return bq.async_query(Template(sql).substitute(sub), params=(), dest_table=STORY_COUNT_PER_AUTHOR)
+```
+*Figure 20: `get_wired_and_nyt_counts()` to run the query*
+
+Figure 21 and 22 depict the UI at the client side before and after the query request.
+
+![alt_text](author_kpi_domain_before.png "Before the request")
+*Figure 21: UI before user clicks on `Get Result`*
+
+![alt_text](author_kpi_domain_after.png "After the request")
+*Figure 22: UI after user clicks on `Get Result`*
 
 #### Reset
 The feature `Reset` offers a complete cleanup. It removes the data set which is defined by `GOOG_DATASET_NAME` and recreate the data set under the project.
 
-Figure 19 and 20 show the implementations.
+Figure 23 and 24 show the implementations.
 
 ```python
 class Reset(webapp2.RequestHandler):
@@ -470,7 +551,7 @@ class Reset(webapp2.RequestHandler):
         hacker.reset()
         self.redirect('/')
 ```
-*Figure 19: class `Reset` to handle the client request*
+*Figure 23: class `Reset` to handle the client request*
 
 ```python
 def reset():
@@ -484,7 +565,7 @@ def reset():
         ds.delete()
     ds.create()
 ```
-*Figure 20: `reset()` to remove and recreate the data set*
+*Figure 24: `reset()` to remove and recreate the data set*
 
 ## Running the App
 This web app is development for [Google App Engine][goog_python_app_engine]. It can run locally without `Google Cloud Platform`'s `standard environment`.
