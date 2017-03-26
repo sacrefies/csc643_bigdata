@@ -20,13 +20,14 @@ Developers shall keep their own versions locally for their own development envir
 The values of the variables will be set to different values for the runtime environment.
 """
 
-
 # The google project id - Place your project id here
-GOOG_PROJECT_ID = r''
+GOOG_PROJECT_ID = r'<project id>'
 # The google service credentials.
-GOOG_CREDENTIALS_FILE_PATH = r''
+GOOG_CREDENTIALS_FILE_PATH = r'<service account secret file path>'
 # The dataset name
-GOOG_DATASET_NAME = r''
+GOOG_DATASET_NAME = r'<project data set name>'
 
 # Query related
-MAX_RESULT_COUNT = 20
+MAX_RESULT_COUNT = 500
+# Google API timeout
+GOOG_API_FETCH_TIMEOUT = 120
