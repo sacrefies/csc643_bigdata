@@ -68,13 +68,13 @@ limitations under the License.
 - [About Team 1](#about-team-1)
 
 ## Introduction
-This project is developed in Python. It is built on top of [WebApp2][webapp2] framework with the standard [Python Client API Libraries][goog_py_cli_api] to access to Google's backend public datasets.
+This project is developed in Python. It is built on top of the [WebApp2][webapp2] framework with the standard [Python Client API Libraries][goog_py_cli_api] to access to Google's backend public datasets.
 
 The application developed in this project allows web clients to process the following form-driven queries:
 + How many stories are there?
 + Which story has received the lowest score?
 + On average which URL produced the best story in 2010?
-+ List how many stories where posted by each author on nytimes.com and wired.com.
++ List how many stories were posted by each author on nytimes.com and wired.com.
 
 *For team member contributions, see: [workload and responsibilities][ranking]*
 
@@ -82,13 +82,13 @@ The application developed in this project allows web clients to process the foll
 *Apache License V2.0* is applied to this project.
 
 ## Implementation
-This project implements a lightweight web application which is designed for [WebApp2][webapp2] framework and to be driven by [Google App Engine][goog_python_app_engine].
+This project implements a lightweight web application which is designed for the [WebApp2][webapp2] framework and to be driven by the [Google App Engine][goog_python_app_engine].
 
-The implementation incorporates `Google Cloud BigQuery` library to execute some simple queries towards Google's public data set `Hacker News`, and display the query results on a HTML template.
+The implementation incorporates the `Google Cloud BigQuery` library to execute some simple queries on Google's public data set `Hacker News`, and display the query results on an HTML template.
 
 The source consists of 3 parts:
 + [x] A settings/configuration module to manage the global/customizable configurations
-+ [x] A wrapper class `BigQuery` which provides major features to facilitate query execution. Such class masks out the complexity of library `google.cloud.bigquery`.
++ [x] A wrapper class `BigQuery` which provides major features to facilitate query execution. The class masks out the complexity of the library `google.cloud.bigquery`.
 + [x] A web application which conforms to the convention of [WebApp2][webapp2] and [Google App Engine][goog_python_app_engine], and which handles the requests from the web clients.
 
 ### Technical Architecture
@@ -104,7 +104,7 @@ The following diagram example demonstrates how the post request is handled by th
 ### Settings
 To be able to connect to `Google BigQuery API`, the public data sets and developer's own data set, a set of environmental settings must be established, such as `project id`, `data set name`, `table name`, etc.
 
-In the implementation, this project employs a settings module to manage the variables. One can make simple changes to the settings module to adapt for their local reality. See figure 1 and 2 for the detail.
+In the implementation, this project employs a settings module to manage the variables. One can make simple changes to the settings module to adapt for their local reality. See figures 1 and 2 for details.
 
 ```python
 """This file is the base configuration which keeps the CONSTANTS."""
@@ -174,7 +174,7 @@ def get_client(self):
 ```
 *Figure 3: `get_client()` to create a `Google BigQuery Client` object.*
 
-A query can be executed in either synchronous or asynchronous way. Figure 4 shows the method `sync_query` and figure 5 shows the method `async_query`.
+A query can be executed either synchronously or asynchronously. Figure 4 shows the method `sync_query` and figure 5 shows the method `async_query`.
 ```python
 def sync_query(self, query, params=()):
     """Perform a query and return the result and the total count of the affected rows.
@@ -287,12 +287,12 @@ def build_params(cls, params):
 *Figure 6: `build_params()` to construct parameters*
 
 ### Functional Modules
-While the `BigQuery` class acts as the fundamental module, The queries and client requests are handled by the functional modules. The module `hacker_news.py` includes functions to run the queries that are asked by the requirements; The view controller modules incorporates [WebApp2][webapp2] framework to handle the requests and responses.
+While the `BigQuery` class acts as the fundamental module, the queries and client requests are handled by the functional modules. The module `hacker_news.py` includes functions to run the queries that are asked by the requirements; The view controller modules incorporates the [WebApp2][webapp2] framework to handle the requests and responses.
 
 #### Query A: Story Count
-This query's request is sent by a HTML form and is handled by the view class `TotalStoryCount`, and the query is executed by the function `get_story_count()` in `hacker_news.py`.
+This query's request is sent by an HTML form and is handled by the view class `TotalStoryCount`. The query is executed by the function `get_story_count()` in `hacker_news.py`.
 
-Figure 7 and 8 show the implementations.
+Figures 7 and 8 show the implementations.
 
 ```python
 class TotalStoryCount(webapp2.RequestHandler):
@@ -329,7 +329,7 @@ def get_story_count():
 ```
 *Figure 8: `get_story_count()` to run the query*
 
-Figure 9 and 10 depict the UI at the client side before and after the query request.
+Figures 9 and 10 depict the UI at the client side before and after the query request.
 
 ![alt_text](story_count_before.png "Before the request")
 *Figure 9: UI before user clicks on `Get Result`*
@@ -337,12 +337,12 @@ Figure 9 and 10 depict the UI at the client side before and after the query requ
 ![alt_text](story_count_after.png "After the request")
 *Figure 10: UI after user clicks on `Get Result`*
 
-#### Query B: Stories Received the Lowest Score
-This query's request is sent by a HTML form and is handled by the view class `LowestStoryScore`, and the query is executed by the function `get_lowest_story_score()` in `hacker_news.py`.
+#### Query B: Stories Receiving the Lowest Score
+This query's request is sent by an HTML form and is handled by the view class `LowestStoryScore`; the query is executed by the function `get_lowest_story_score()` in `hacker_news.py`.
 
-Due to API result fetching timeout issue, the function `get_lowest_story_score()` gets only `MAX_RESULT_COUNT` number of result records. For instance, it's `100` that is set shown by figure 14.
+Due to API result fetching timeout issue, the function `get_lowest_story_score()` gets only `MAX_RESULT_COUNT` number of result records. For instance, `100` is set and shown by figure 14.
 
-Figure 11 and 12 show the implementations.
+Figures 11 and 12 show the implementations.
 
 ```python
 class LowestStoryScore(webapp2.RequestHandler):
@@ -380,7 +380,7 @@ def get_lowest_story_score():
 ```
 *Figure 12: `get_lowest_story_score()` to run the query*
 
-Figure 13 and 14 depict the UI at the client side before and after the query request.
+Figures 13 and 14 depict the UI at the client side before and after the query request.
 
 ![alt_text](story_lowest_score_before.png "Before the request")
 *Figure 13: UI before user clicks on `Get Result`*
@@ -389,9 +389,9 @@ Figure 13 and 14 depict the UI at the client side before and after the query req
 *Figure 14: UI after user clicks on `Get Result`*
 
 #### Query C: URLs that Produced the Best Stories on Average
-This query's request is sent by a HTML form and is handled by the view class `BestStoryProducerAVG`, and the query is executed by the function `best_story_producer_on_avg()` in `hacker_news.py`.
+This query's request is sent by an HTML form and is handled by the view class `BestStoryProducerAVG`.  The query is executed by the function `best_story_producer_on_avg()` in `hacker_news.py`.
 
-Figure 15 and 16 show the implementations.
+Figures 15 and 16 show the implementations.
 
 ```python
 class BestStoryProducerAVG(webapp2.RequestHandler):
@@ -450,7 +450,7 @@ def best_story_producer_on_avg():
 ```
 *Figure 16: `best_story_producer_on_avg()` to run the query*
 
-Figure 17 and 18 depict the UI at the client side before and after the query request.
+Figures 17 and 18 depict the UI at the client side before and after the query request.
 
 ![alt_text](url_avg_best_before.png "Before the request")
 *Figure 17: UI before user clicks on `Get Result`*
@@ -459,9 +459,9 @@ Figure 17 and 18 depict the UI at the client side before and after the query req
 *Figure 18: UI after user clicks on `Get Result`*
 
 #### Query D: Story Count by Author on NYTimes.com and Wired.com
-This query's request is sent by a HTML form and is handled by the view class `StoryCountByAuthorOnDomain`, and the query is executed by the function `get_wired_and_nyt_counts()` in `hacker_news.py`.
+This query's request is sent by a HTML form and is handled by the view class `StoryCountByAuthorOnDomain`. The query is executed by the function `get_wired_and_nyt_counts()` in `hacker_news.py`.
 
-Figure 19 and 20 show the implementations.
+Figures 19 and 20 show the implementations.
 
 ```python
 class StoryCountByAuthorOnDomain(webapp2.RequestHandler):
@@ -529,7 +529,7 @@ def get_wired_and_nyt_counts():
 ```
 *Figure 20: `get_wired_and_nyt_counts()` to run the query*
 
-Figure 21 and 22 depict the UI at the client side before and after the query request.
+Figures 21 and 22 depict the UI at the client side before and after the query request.
 
 ![alt_text](author_kpi_domain_before.png "Before the request")
 *Figure 21: UI before user clicks on `Get Result`*
@@ -538,9 +538,9 @@ Figure 21 and 22 depict the UI at the client side before and after the query req
 *Figure 22: UI after user clicks on `Get Result`*
 
 #### Reset
-The feature `Reset` offers a complete cleanup. It removes the data set which is defined by `GOOG_DATASET_NAME` and recreate the data set under the project.
+The feature `Reset` offers a complete cleanup. It removes the data set which is defined by `GOOG_DATASET_NAME` and recreates the data set under the project.
 
-Figure 23 and 24 show the implementations.
+Figures 23 and 24 show the implementations.
 
 ```python
 class Reset(webapp2.RequestHandler):
@@ -567,8 +567,8 @@ def reset():
 *Figure 24: `reset()` to remove and recreate the data set*
 
 ## Running the App
-This web app is development for [Google App Engine][goog_python_app_engine]. It can run locally without `Google Cloud Platform`'s `standard environment`.
-However there are a few things to be done before the app can be run.
+This web app is developed for the [Google App Engine][goog_python_app_engine]. It can run locally without `Google Cloud Platform`'s `standard environment`.
+However, there are a few things to be done before the app can be run.
 
 ### Prerequisites
 Make sure the following software packages are installed.
@@ -599,7 +599,7 @@ A valid `Google Cloud` project is used by this app.
 + Go to `IAM & Admin` page of the `Google Cloud Console`, assign `Bigquery > Data Owner` role to the service account.
 
 ### Configuration
-Before the app can be driven by the [Google App Engine][goog_python_app_engine], A few changes should be made for the project to adapt to the local environment.
+Before the app can be driven by the [Google App Engine][goog_python_app_engine], a few changes should be made for the project to adapt to the local environment.
 
 Open `cust_settings.py`, set the proper values to the following variables:
 ```python
