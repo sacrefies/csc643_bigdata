@@ -197,9 +197,9 @@ class BigQuery(object):
         pt = None
         rs = []
         while True:
-            row_data, total_rows, page_token = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
+            row_data, total_rows, pt = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
             rs += row_data
-            if not page_token:
+            if not pt:
                 break
 
         return rs, total_rows

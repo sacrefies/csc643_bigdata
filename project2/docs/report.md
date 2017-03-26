@@ -241,15 +241,14 @@ def async_query(self, query, params=(), dest_table=None, dest_dataset=None):
     query_job.begin()
     # wait for the job complete
     self.__async_wait(query_job)
-
     # Drain the query results by requesting a page at a time.
     query_results = query_job.results()
     rs = []
     pt = None
     while True:
-        row_data, total_rows, page_token = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
+        row_data, total_rows, pt = query_results.fetch_data(MAX_RESULT_COUNT, page_token=pt)
         rs += row_data
-        if not page_token:
+        if not pt:
             break
 
     return rs, total_rows
@@ -460,7 +459,7 @@ Figure 17 and 18 depict the UI at the client side before and after the query req
 *Figure 18: UI after user clicks on `Get Result`*
 
 #### Query D: Story Count by Author on NYTimes.com and Wired.com
-This query's request is sent by a HTML form and is handled by the view class `BestStoryProducerAVG`, and the query is executed by the function `best_story_producer_on_avg()` in `hacker_news.py`.
+This query's request is sent by a HTML form and is handled by the view class `StoryCountByAuthorOnDomain`, and the query is executed by the function `get_wired_and_nyt_counts()` in `hacker_news.py`.
 
 Figure 19 and 20 show the implementations.
 
