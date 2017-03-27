@@ -27,11 +27,6 @@ var switchTab = function (name) {
     var tabContentId = getTabContentId(name);
 
     // set all nav tab items deactivated first
-    // var li = $("#navControl li");
-    // for (var i = 0; i < li.length; i++) {
-    //     console.log(li[i].className);
-    //     li[i].className = "";
-    // }
     $("#navControl li").each(function () {
         if ($(this).prop("id") != "reset")
             $(this).removeClass();
