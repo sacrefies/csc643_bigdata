@@ -224,6 +224,7 @@ FakesAssemblies/
 
 # idea related
 .idea/
+.iml
 
 # third-party libraries
 lib/
