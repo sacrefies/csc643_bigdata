@@ -12,6 +12,8 @@ This project is developed in `Java` with `JDK7` and is designed for [Apache Hado
 + Income
     + Household income
 
+There can be many perspectives/angles to use/cook and to analyze the data. Here is *Team 1*'s [formula][multi_regression]
+
 *See the [project report](docs/report.md) for details.*
 
 ## Working in A Windows Environment
@@ -27,3 +29,4 @@ Please see [Install and Configure Hadoop on Windows](docs/set_up_win_dev.md) doc
 [hads_docs]: https://www.huduser.gov/portal/datasets/hads/HADS_doc.pdf "HADS Documentation"
 [gov_data]: https://www.data.gov/ "The Home of the U.S. Government's Open Data"
 [hads_2013]: https://www.huduser.gov/portal/datasets/hads/hads2013n_ASCII.zip "HADS Data 2013"
+[multi_regression]: "docs/multiple_regression_instruction.md" "Multiple Regression"
