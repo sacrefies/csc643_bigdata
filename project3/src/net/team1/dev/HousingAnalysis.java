@@ -5,15 +5,11 @@ package net.team1.dev;
 import java.io.IOException;
 import java.util.*;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.conf.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.*;
+import org.apache.hadoop.util.*;
 
 public class HousingAnalysis {
 
@@ -21,7 +17,7 @@ public class HousingAnalysis {
 	    public static class Map extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
 
 	      //*** our variables are declared here
-	      private Text key = new Text();
+	      private Text myKey = new Text();
 	      private Text variables = new Text();
 
 	      public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
@@ -62,12 +58,12 @@ public class HousingAnalysis {
 					else rating += 2;
 			}
 
-	        key.set(region + "\t" + location);
+	        myKey.set(region + "\t" + location);
 			//Count[1 for all data available, 0for missing data]
 			//  age, #persons, Own/Rent, Total Wage Income)
 	        variables.set(count + "\t" + rating + "\t" + income); 
 
-	        output.collect(key, variables);
+	        output.collect(myKey, variables);
 	      }
 	    }
 
@@ -92,7 +88,7 @@ public class HousingAnalysis {
 			   }
 		   }
 
-			output.collect(key, new Text( totalCount + "\t" + (rating/totalCount) + "\t" + (income/totalCount)));
+			output.collect(key, new Text( totalCount + "\t" + (ratingSum/totalCount) + "\t" + (incomeSum/totalCount)));
 
 	      }
 	    }
