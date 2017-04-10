@@ -33,12 +33,12 @@ public class HousingAnalysis {
 			int count = 0;
 			int rating = 0;
 			
-			int region = row[3];
+			int region = Integer.parseInt(row[3]);
 			String location = row[75]; 
-			int age = row[1]; 
-			int persons = row[20];
+			int age = Integer.parseInt(row[1]); 
+			int persons = Integer.parseInt(row[20]);
 			String ownRent = row[79];
-			int income = row[32]; 
+			int income = Integer.parseInt(row[32]); 
 			
 			//Normalize Location
 			if(location.contains("-5"))
