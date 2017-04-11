@@ -34,6 +34,9 @@ public class HousingAnalysis {
      * An inner class to set-up the mapper function.
      */
     public static class Map extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
+        private Text mappedKey = new Text();
+        private Text variables = new Text();
+
         /**
          * A map function to map the data.
          *
@@ -43,9 +46,11 @@ public class HousingAnalysis {
          * @param reporter The output value
          * @throws IOException When the input data stream is invalid.
          */
+        @Override
         public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
             // Housing data come in as lines of comma-separated data
-            String row[] = value.toString().split(",");
+            String normalized = value.toString().replaceAll("'", "");
+            String row[] = normalized.split(",");
             int region = Integer.parseInt(row[3]);
             String location = row[75].contains("-5") ? "Suburban" : "City";
             int age = Integer.parseInt(row[1]);
@@ -62,12 +67,9 @@ public class HousingAnalysis {
                 count = 1;
             }
 
-            Text mappedKey = new Text();
-            Text variables = new Text();
-
             mappedKey.set(region + "," + location);
             // count[1 for all data available, 0 for missing data], ratings, Total Wage Income
-            variables.set(count + "," + Double.toString(rating) + "," + Double.toString(income));
+            variables.set(String.format("%1$d,%2$.4f,%3$.2f", count, rating, income));
             output.collect(mappedKey, variables);
         }
     }
@@ -76,6 +78,11 @@ public class HousingAnalysis {
      * An inner class to set-up the reduce function
      */
     public static class Reduce extends MapReduceBase implements Reducer<Text, Text, Text, Text> {
+        private Text value = new Text();
+        private int totalCount = 0;
+        private double ratingSum = 0.;
+        private double incomeSum = 0.;
+
         /**
          * A reduce function to aggregate the mapped data.
          *
@@ -85,18 +92,16 @@ public class HousingAnalysis {
          * @param reporter The output value
          * @throws IOException When the input stream is invalid.
          */
+        @Override
         public void reduce(Text key, Iterator<Text> values, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
-            int totalCount = 0;
-            double ratingSum = 0;
-            double incomeSum = 0;
-
             while (values.hasNext()) {
                 String tokens[] = values.next().toString().split(",");
                 totalCount += Integer.parseInt(tokens[0]);
                 ratingSum += Double.parseDouble(tokens[1]);
                 incomeSum += Double.parseDouble(tokens[2]);
             }
-            output.collect(key, new Text(totalCount + "," + (ratingSum / totalCount) + "," + (incomeSum / totalCount)));
+            value.set(String.format("%1$d,%2$.4f,%3$.2f", totalCount, ratingSum / totalCount, incomeSum / totalCount));
+            output.collect(key, value);
         }
     }
 
