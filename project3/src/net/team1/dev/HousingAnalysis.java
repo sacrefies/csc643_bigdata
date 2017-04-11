@@ -34,7 +34,6 @@ public class HousingAnalysis {
      * An inner class to set-up the mapper function.
      */
     public static class Map extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
-
         /**
          * A map function to map the data.
          *
@@ -45,19 +44,18 @@ public class HousingAnalysis {
          * @throws IOException When the input data stream is invalid.
          */
         public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
-
-            //*** Housing data come in as lines of comma-separated data
+            // Housing data come in as lines of comma-separated data
             String row[] = value.toString().split(",");
             int region = Integer.parseInt(row[3]);
             String location = row[75].contains("-5") ? "Suburban" : "City";
             int age = Integer.parseInt(row[1]);
             int persons = Integer.parseInt(row[20]);
             String ownRent = row[79];
-            int income = Integer.parseInt(row[32]);
+            double income = (Double.parseDouble(row[32]) < 0.) ? 0. : Double.parseDouble(row[32]);
 
             //Get the Variables
             int count = 0;
-            int rating = 0;
+            double rating = 0.;
             //Check for missing data
             if (persons != -6 && age != -9 && !ownRent.contains(".") && income != -9) {
                 rating = age % 10 + persons + ((ownRent.contains("own")) ? 1 : 2);
@@ -69,36 +67,39 @@ public class HousingAnalysis {
 
             mappedKey.set(region + "," + location);
             // count[1 for all data available, 0 for missing data], ratings, Total Wage Income
-            variables.set(count + "," + rating + "," + income);
+            variables.set(count + "," + Double.toString(rating) + "," + Double.toString(income));
             output.collect(mappedKey, variables);
         }
     }
 
-    //**************************************************************************
+    /**
+     * An inner class to set-up the reduce function
+     */
     public static class Reduce extends MapReduceBase implements Reducer<Text, Text, Text, Text> {
+        /**
+         * A reduce function to aggregate the mapped data.
+         *
+         * @param key      The input key
+         * @param values   The input value
+         * @param output   The output key
+         * @param reporter The output value
+         * @throws IOException When the input stream is invalid.
+         */
         public void reduce(Text key, Iterator<Text> values, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
-
             int totalCount = 0;
             double ratingSum = 0;
             double incomeSum = 0;
 
             while (values.hasNext()) {
-                String tokens[] = values.next().toString().split("\t");
-                int count = Integer.parseInt(tokens[0]);
-                int rating = Integer.parseInt(tokens[1]);
-                int income = Integer.parseInt(tokens[2]);
-
-                if (count == 1) {    // ignore houses with missing data
-                    totalCount += count;
-                    ratingSum += rating;
-                    incomeSum += income;
-                }
+                String tokens[] = values.next().toString().split(",");
+                totalCount += Integer.parseInt(tokens[0]);
+                ratingSum += Double.parseDouble(tokens[1]);
+                incomeSum += Double.parseDouble(tokens[2]);
             }
-
-            output.collect(key, new Text(totalCount + "\t" + (ratingSum / totalCount) + "\t" + (incomeSum / totalCount)));
-
+            output.collect(key, new Text(totalCount + "," + (ratingSum / totalCount) + "," + (incomeSum / totalCount)));
         }
     }
+
 
     //**************************************************************************
     public static void main(String[] args) throws Exception {
