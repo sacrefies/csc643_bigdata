@@ -14,20 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-
-
 # Project 3: A Simple Analysis of Housing Affordability Data by Using Hadoop
 
 *This project is developed by* ***Team 1***:
@@ -39,21 +25,21 @@ limitations under the License.
 
 ## Table of Content
 - [Project 3: A Simple Analysis of Housing Affordability Data by Using Hadoop](#project-3-a-simple-analysis-of-housing-affordability-data-by-using-hadoop)
-	- [Table of Content](#table-of-content)
-	- [Introduction](#introduction)
-		- [2013 HADS Data Analysis](#2013-hads-data-analysis)
-		- [2003-2013 HADS Data Analysis](#2003-2013-hads-data-analysis)
-		- [License](#license)
-	- [Implementation](#implementation)
-		- [Overview](#overview)
-		- [The Data Preprocessor Tool](#the-data-preprocessor-tool)
-		- [The Mappers](#the-mappers)
-			- [The Base Mapper](#the-base-mapper)
-			- [The Concrete Mappers](#the-concrete-mappers)
-		- [The Reducer](#the-reducer)
-		- [The Main Runner](#the-main-runner)
-	- [Compiling the Project](#compiling-the-project)
-	- [Running the Map/Reduce Process](#running-the-mapreduce-process)
+    - [Table of Content](#table-of-content)
+    - [Introduction](#introduction)
+        - [2013 HADS Data Analysis](#2013-hads-data-analysis)
+        - [2003-2013 HADS Data Analysis](#2003-2013-hads-data-analysis)
+        - [License](#license)
+    - [Implementation](#implementation)
+        - [Overview](#overview)
+        - [The Data Preprocessor Tool](#the-data-preprocessor-tool)
+        - [The Mappers](#the-mappers)
+            - [The Base Mapper](#the-base-mapper)
+            - [The Concrete Mappers](#the-concrete-mappers)
+        - [The Reducer](#the-reducer)
+        - [The Main Runner](#the-main-runner)
+    - [Compiling the Project](#compiling-the-project)
+    - [Running the Map/Reduce Process](#running-the-mapreduce-process)
 - [About Team 1](#about-team-1)
 
 ## Introduction
@@ -395,7 +381,7 @@ public class HousingAnalysis {
         }
 
         // set output
-        ...
+        ...;
 
         // start the job
         JobClient.runJob(conf);
@@ -427,7 +413,6 @@ public class HousingAnalysis {
 
     private static final Logger LOG = Logger.getLogger(HousingAnalysis.class.getName());
 }
-
 ```
 
 ## Compiling the Project
@@ -435,6 +420,7 @@ public class HousingAnalysis {
 ```bash
 $ javac -cp $HADOOP_CLASSPATH -d out <path_to_the_source>/*.java
 ```
+
 + Use the following command to make a `jar` package file:
 ```bash
 $ jar -cvf HousingAnalysis.jar -C out/ .
