@@ -45,19 +45,23 @@ public class HousingReducer extends MapReduceBase implements Reducer<Text, Text,
     public void reduce(Text key, Iterator<Text> values,
                        OutputCollector<Text, Text> outputCollector, Reporter reporter) throws IOException {
         int totalCount = 0;
+		int incomeCount = 0; 
         double ratingSum = 0.;
         double incomeSum = 0.;
         while (values.hasNext()) {
             String tokens[] = values.next().toString().split(",");
             totalCount += Integer.parseInt(tokens[0]);
             ratingSum += Double.parseDouble(tokens[1]);
-            incomeSum += Double.parseDouble(tokens[2]);
+			if(Double.parseDouble(tokens[1] != 0) {
+				incomeSum += Double.parseDouble(tokens[2]);
+				incomeCount ++; 
+			}
             String log = String.format("(%1$s), (%2$d, %3$f, %4$f)", key.toString(),
                     Integer.parseInt(tokens[0]), Double.parseDouble(tokens[1]), Double.parseDouble(tokens[2]));
             LOG.info(log);
         }
         LOG.info(String.format("(%1$s), (%2$d, %3$f, %4$f)", key.toString(), totalCount, ratingSum, incomeSum));
-        Text value = new Text(String.format("%1$d,%2$.4f,%3$.2f", totalCount, ratingSum / totalCount, incomeSum / totalCount));
+        Text value = new Text(String.format("%1$d,%2$.4f,%3$.2f", totalCount, ratingSum / totalCount, incomeSum / incomeCount));
         outputCollector.collect(key, value);
     }
 }
