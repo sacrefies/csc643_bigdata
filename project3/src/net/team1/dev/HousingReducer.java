@@ -24,7 +24,6 @@ import org.apache.hadoop.mapred.Reporter;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.logging.Logger;
 
 /**
  * A reducer class for the 2013 housing data

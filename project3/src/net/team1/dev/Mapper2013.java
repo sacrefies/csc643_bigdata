@@ -17,7 +17,7 @@
 package net.team1.dev;
 
 /**
- * A mapper class for the 2013 housing data
+ * The mapper class for the 2013 data
  */
 public class Mapper2013 extends MapperBase {
     public Mapper2013() {

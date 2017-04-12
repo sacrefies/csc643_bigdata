@@ -35,7 +35,12 @@ import java.util.logging.Logger;
  */
 public class HousingAnalysis {
 
-    //**************************************************************************
+    /**
+     * The main entry point for the map/reduce runner.
+     *
+     * @param args 2 args: \<input dir\> \<output dir\>
+     * @throws Exception Throws IOException
+     */
     public static void main(String[] args) throws Exception {
         Path inputDir = new Path(args[0]);
         Path outputDir = new Path(args[1]);
@@ -70,7 +75,15 @@ public class HousingAnalysis {
         JobClient.runJob(conf);
     }
 
-    private static HashMap<Path, Class<? extends Mapper>> getInputFilePaths(Path inputDir, FileSystem fs) throws Exception {
+    /**
+     * Walk through the input directory to get all the input files and construct the file path and mapper class dictionary.
+     *
+     * @param inputDir The path of the input directory
+     * @param fs       The HDFS file system object.
+     * @return A {@link HashMap} whose keys are the file path and values are the corresponding mapper classes.
+     * @throws IOException IOException
+     */
+    private static HashMap<Path, Class<? extends Mapper>> getInputFilePaths(Path inputDir, FileSystem fs) throws IOException {
         HashMap<Path, Class<? extends Mapper>> mappers = new HashMap<>();
         FileStatus files[] = fs.listStatus(inputDir, new PathFilter() {
             @Override

@@ -17,7 +17,7 @@
 package net.team1.dev;
 
 /**
- * Created by Jason on 4/11/2017.
+ * The mapper class for the 2005 data
  */
 public class Mapper2005 extends MapperBase {
     public Mapper2005() {
