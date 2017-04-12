@@ -43,23 +43,30 @@ public class HousingAnalysis {
 
         if (!fs.exists(inputDir))
             throw new IOException("The input path does not exist.");
-        if (!fs.isFile(inputDir))
+        if (fs.isFile(inputDir))
             throw new IOException("The input path is a file.");
         if (fs.exists(outputDir)) fs.delete(outputDir, true);
 
+        // set job configuration
         JobConf conf = new JobConf(HousingAnalysis.class);
         conf.setJobName("housinganalysis");
         conf.setOutputKeyClass(Text.class);
         conf.setOutputValueClass(Text.class);
         conf.setOutputFormat(TextOutputFormat.class);
-        // add multiple input files
-        HashMap<Path, Class<? extends Mapper>> inputMappers = getInputFilePaths(inputDir, fs);
-        for (Path p : inputMappers.keySet())
-            MultipleInputs.addInputPath(conf, p, TextInputFormat.class, inputMappers.get(p));
-
         conf.setCombinerClass(HousingReducer.class);
         conf.setReducerClass(HousingReducer.class);
 
+        // set multiple input files
+        HashMap<Path, Class<? extends Mapper>> inputMappers = getInputFilePaths(inputDir, fs);
+        for (Path p : inputMappers.keySet()) {
+            MultipleInputs.addInputPath(conf, p, TextInputFormat.class, inputMappers.get(p));
+            LOG.info(p.getName() + ": " + inputMappers.get(p).getName());
+        }
+
+        // set output
+        FileOutputFormat.setOutputPath(conf, outputDir);
+
+        // start the job
         JobClient.runJob(conf);
     }
 
@@ -75,7 +82,6 @@ public class HousingAnalysis {
         for (FileStatus f : files) {
             Path p = f.getPath();
             String fileName = p.getName();
-            LOG.info("file: " + fileName);
             if (fileName.contains("2013"))
                 mappers.put(p, Mapper2013.class);
             else if (fileName.contains("2003"))

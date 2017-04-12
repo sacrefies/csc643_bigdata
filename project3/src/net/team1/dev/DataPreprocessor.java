@@ -111,7 +111,7 @@ class DataPreprocessor {
      */
     static {
         // init the columns configurations from 2003 ~ 2011
-        INVALID_INDENTIFIER = -1;
+        INVALID_INDENTIFIER = -9;
         // 2003 data config
         ColumnConfig2003 = new HashMap<>();
         ColumnConfig2003.put("Age", 1);
