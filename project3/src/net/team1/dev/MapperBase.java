@@ -25,7 +25,6 @@ import org.apache.hadoop.mapred.Reporter;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.logging.Logger;
 
 /**
  * A base class for all the mappers.
@@ -68,6 +67,12 @@ public abstract class MapperBase extends MapReduceBase implements Mapper<LongWri
         outputCollector.collect(keyToEmit, valueToEmit);
     }
 
+    /**
+     * Set up the configurations for the input data respectively.
+     *
+     * @param columnConfig The fields configuration
+     * @param whichYear    For which year the input data is
+     */
     protected void setUp(HashMap<String, Integer> columnConfig, int whichYear) {
         columns = columnConfig;
         year = whichYear;
