@@ -52,7 +52,7 @@ public class HousingReducer extends MapReduceBase implements Reducer<Text, Text,
             String tokens[] = values.next().toString().split(",");
             totalCount += Integer.parseInt(tokens[0]);
             ratingSum += Double.parseDouble(tokens[1]);
-			if(Double.parseDouble(tokens[1] != 0) {
+			if(Double.parseDouble(tokens[1] != 0)) {
 				incomeSum += Double.parseDouble(tokens[2]);
 				incomeCount ++; 
 			}
