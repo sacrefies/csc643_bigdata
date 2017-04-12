@@ -65,10 +65,6 @@ public abstract class MapperBase extends MapReduceBase implements Mapper<LongWri
         Text keyToEmit = new Text(region + ", " + location + ", " + year);
         // count[1 for all data available, 0 for missing data], ratings, Total Wage Income
         Text valueToEmit = new Text(String.format("%1$d,%2$.4f,%3$.2f", count, rating, income));
-
-        String log = String.format("[(%1$d, %2$s),(%3$d, %4$f, %5$f), original: (%6$d, %7$d, %8$s, %5$f)]",
-                region, location, count, rating, income, age, persons, ownRent);
-        LOG.info(log);
         outputCollector.collect(keyToEmit, valueToEmit);
     }
 
@@ -76,8 +72,6 @@ public abstract class MapperBase extends MapReduceBase implements Mapper<LongWri
         columns = columnConfig;
         year = whichYear;
     }
-
-    protected static Logger LOG = Logger.getLogger(MapperBase.class.getName());
 
     /**
      * The data field configuration

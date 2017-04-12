@@ -30,3 +30,4 @@ Please see [Install and Configure Hadoop on Windows](docs/set_up_win_dev.md) doc
 [gov_data]: https://www.data.gov/ "The Home of the U.S. Government's Open Data"
 [hads_2013]: https://www.huduser.gov/portal/datasets/hads/hads2013n_ASCII.zip "HADS Data 2013"
 [multi_regression]: "docs/multiple_regression_instruction.md" "Multiple Regression"
+[hads_all_data]: "https://www.huduser.gov/portal/datasets/hads/hads.html" "All HADS Data Packages"

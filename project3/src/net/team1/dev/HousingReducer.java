@@ -30,8 +30,6 @@ import java.util.logging.Logger;
  * A reducer class for the 2013 housing data
  */
 public class HousingReducer extends MapReduceBase implements Reducer<Text, Text, Text, Text> {
-    private static final Logger LOG = Logger.getLogger(HousingAnalysis.class.getName());
-
     /**
      * A reduce function to aggregate the mapped data.
      *
@@ -51,17 +49,12 @@ public class HousingReducer extends MapReduceBase implements Reducer<Text, Text,
         while (values.hasNext()) {
             String tokens[] = values.next().toString().split(",");
             totalCount += Integer.parseInt(tokens[0]);
-            ratingSum += Double.parseDouble(tokens[1]);
-            if (Double.parseDouble(tokens[1]) != 0) {
+            if (ratingSum < ratingSum + Double.parseDouble(tokens[1])) {
+                ratingSum += Double.parseDouble(tokens[1]);
                 incomeSum += Double.parseDouble(tokens[2]);
                 incomeCount++;
             }
-            String log = String.format("(%1$s), (%2$d, %3$f, %4$f)", key.toString(),
-                    Integer.parseInt(tokens[0]), Double.parseDouble(tokens[1]), Double.parseDouble(tokens[2]));
-            LOG.info(log);
         }
-        LOG.info(String.format("(%1$s), (%2$d, %3$f, %4$f)",
-                key.toString(), totalCount, ratingSum / totalCount, incomeSum / incomeCount));
         Text value = new Text(String.format("%1$d,%2$.4f,%3$.2f",
                 totalCount, ratingSum / totalCount, incomeSum / incomeCount));
         outputCollector.collect(key, value);
