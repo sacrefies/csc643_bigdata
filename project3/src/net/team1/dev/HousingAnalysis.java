@@ -16,9 +16,17 @@
 
 package net.team1.dev;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.*;
+import org.apache.hadoop.mapred.lib.MultipleInputs;
+
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 
@@ -27,30 +35,64 @@ import java.util.logging.Logger;
  */
 public class HousingAnalysis {
 
-    private static final Logger LOG = Logger.getLogger(HousingAnalysis.class.getName());
-
     //**************************************************************************
     public static void main(String[] args) throws Exception {
-        LOG.info(args[0]);
-        LOG.info(args[1]);
+        Path inputDir = new Path(args[0]);
+        Path outputDir = new Path(args[1]);
+        FileSystem fs = FileSystem.get(new Configuration());
+
+        if (!fs.exists(inputDir))
+            throw new IOException("The input path does not exist.");
+        if (!fs.isFile(inputDir))
+            throw new IOException("The input path is a file.");
+        if (fs.exists(outputDir)) fs.delete(outputDir, true);
+
         JobConf conf = new JobConf(HousingAnalysis.class);
         conf.setJobName("housinganalysis");
-
         conf.setOutputKeyClass(Text.class);
         conf.setOutputValueClass(Text.class);
+        conf.setOutputFormat(TextOutputFormat.class);
+        // add multiple input files
+        HashMap<Path, Class<? extends Mapper>> inputMappers = getInputFilePaths(inputDir, fs);
+        for (Path p : inputMappers.keySet())
+            MultipleInputs.addInputPath(conf, p, TextInputFormat.class, inputMappers.get(p));
 
-        conf.setMapperClass(Mapper2013.class);
         conf.setCombinerClass(HousingReducer.class);
         conf.setReducerClass(HousingReducer.class);
 
-        conf.setInputFormat(TextInputFormat.class);
-        conf.setOutputFormat(TextOutputFormat.class);
-
-        FileInputFormat.setInputPaths(conf, new Path(args[0]));
-        FileOutputFormat.setOutputPath(conf, new Path(args[1]));
-
         JobClient.runJob(conf);
     }
+
+    private static HashMap<Path, Class<? extends Mapper>> getInputFilePaths(Path inputDir, FileSystem fs) throws Exception {
+        HashMap<Path, Class<? extends Mapper>> mappers = new HashMap<>();
+        FileStatus files[] = fs.listStatus(inputDir, new PathFilter() {
+            @Override
+            public boolean accept(Path path) {
+                String name = path.getName();
+                return name.endsWith(".txt") && name.startsWith("thads");
+            }
+        });
+        for (FileStatus f : files) {
+            Path p = f.getPath();
+            String fileName = p.getName();
+            LOG.info("file: " + fileName);
+            if (fileName.contains("2013"))
+                mappers.put(p, Mapper2013.class);
+            else if (fileName.contains("2003"))
+                mappers.put(p, Mapper2003.class);
+            else if (fileName.contains("2005"))
+                mappers.put(p, Mapper2005.class);
+            else if (fileName.contains("2007"))
+                mappers.put(p, Mapper2007.class);
+            else if (fileName.contains("2009"))
+                mappers.put(p, Mapper2009.class);
+            else if (fileName.contains("2011"))
+                mappers.put(p, Mapper2011.class);
+        }
+        return mappers;
+    }
+
+    private static final Logger LOG = Logger.getLogger(HousingAnalysis.class.getName());
 }
 
 

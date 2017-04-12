@@ -19,8 +19,8 @@ package net.team1.dev;
 /**
  * A mapper class for the 2013 housing data
  */
-public class Mapper2013 extends MapperBase {
-    public Mapper2013() {
-        setUp(DataPreprocessor.ColumnConfig2013, 2013);
+public class Mapper2011 extends MapperBase {
+    public Mapper2011() {
+        setUp(DataPreprocessor.ColumnConfig2011, 2011);
     }
 }

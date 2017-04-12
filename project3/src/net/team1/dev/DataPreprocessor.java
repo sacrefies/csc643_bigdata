@@ -75,61 +75,70 @@ class DataPreprocessor {
      * The column/field positions of 2013
      */
     static final HashMap<String, Integer> ColumnConfig2013;
+
     /**
      * The column/field positions of 2003
      */
     static final HashMap<String, Integer> ColumnConfig2003;
+
     /**
      * The column/field positions of 2005
      */
     static final HashMap<String, Integer> ColumnConfig2005;
+
     /**
      * The column/field positions of 2007
      */
     static final HashMap<String, Integer> ColumnConfig2007;
+
+    /**
+     * The column/field positions of 2009
+     */
+    static final HashMap<String, Integer> ColumnConfig2009;
+
     /**
      * The column/field positions of 2011
      */
     static final HashMap<String, Integer> ColumnConfig2011;
 
     /**
+     * An integer value which identifies a line of invalid data.
+     */
+    static final int INVALID_INDENTIFIER;
+
+    /**
      * Initialize the static fields before they are used.
      */
     static {
-        // init the column configuration of 2013
-        ColumnConfig2013 = new HashMap<>();
-        ColumnConfig2013.put("Region", 3);
-        ColumnConfig2013.put("Age", 1);
-        ColumnConfig2013.put("Persons", 20);
-        ColumnConfig2013.put("Income", 32);
-        ColumnConfig2013.put("Location", 75);
-        ColumnConfig2013.put("RentOwn", 79);
-
         // init the columns configurations from 2003 ~ 2011
+        INVALID_INDENTIFIER = -1;
+        // 2003 data config
         ColumnConfig2003 = new HashMap<>();
-        ColumnConfig2003.put("Region", 3);
         ColumnConfig2003.put("Age", 1);
+        ColumnConfig2003.put("Region", 3);
         ColumnConfig2003.put("Persons", 12);
         ColumnConfig2003.put("Income", 26);
         ColumnConfig2003.put("Location", 75);
         ColumnConfig2003.put("RentOwn", 79);
-
+        // 2005 data config
         ColumnConfig2005 = new HashMap<>();
-        ColumnConfig2005.put("Region", 4);
         ColumnConfig2005.put("Age", 1);
+        ColumnConfig2005.put("Region", 4);
         ColumnConfig2005.put("Persons", 3);
         ColumnConfig2005.put("Income", 32);
         ColumnConfig2005.put("Location", 75);
         ColumnConfig2005.put("RentOwn", 79);
-
-        ColumnConfig2007 = new HashMap<>();
-        ColumnConfig2007.put("Region", 4);
-        ColumnConfig2007.put("Age", 1);
-        ColumnConfig2007.put("Persons", 3);
-        ColumnConfig2007.put("Income", 32);
-        ColumnConfig2007.put("Location", 75);
-        ColumnConfig2007.put("RentOwn", 79);
-
+        // 2007 data config
+        ColumnConfig2007 = ColumnConfig2005;
+        // 2009 data config
+        ColumnConfig2009 = new HashMap<>();
+        ColumnConfig2009.put("Region", 4);
+        ColumnConfig2009.put("Age", 1);
+        ColumnConfig2009.put("Persons", 3);
+        ColumnConfig2009.put("Income", 33);
+        ColumnConfig2009.put("Location", 76);
+        ColumnConfig2009.put("RentOwn", 80);
+        // 2011 data config
         ColumnConfig2011 = new HashMap<>();
         ColumnConfig2011.put("Region", 3);
         ColumnConfig2011.put("Age", 1);
@@ -137,5 +146,14 @@ class DataPreprocessor {
         ColumnConfig2011.put("Income", 32);
         ColumnConfig2011.put("Location", 75);
         ColumnConfig2011.put("RentOwn", 79);
+        // init the column configuration of 2013
+        ColumnConfig2013 = new HashMap<>();
+        ColumnConfig2013.put("Age", 1);
+        ColumnConfig2013.put("Region", 3);
+        ColumnConfig2013.put("Persons", 20);
+        ColumnConfig2013.put("Income", 32);
+        ColumnConfig2013.put("Location", 75);
+        ColumnConfig2013.put("RentOwn", 79);
+
     }
 }
