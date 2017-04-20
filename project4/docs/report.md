@@ -27,8 +27,10 @@ limitations under the License.
 
 
 ## Introduction
-
 *For team member contributions, see: [workload and responsibilities][ranking]*
+
+### Entity Relations
+![alter text](entity_relations.jpg "Entity Relations")
 
 ### License
 *Apache License V2.0* is applied to this project.
