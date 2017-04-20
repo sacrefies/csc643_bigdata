@@ -11,6 +11,7 @@ This team consists of 3 team members.
 1. [x] [Project 1: A MongoDB NOSQL Exercise](project1/README.md "Project 1 Home")
 1. [x] [Project 2: A Google BigQuery Exercise](project2/README.md "Project 2 Home")
 1. [x] [Project 3: A Hadoop Java Map/Reduce Exercise](project3/README.md "Project 3 Home")
+1. [ ] [Project 4: An Exercise of Apache Pig Latin](project4/README.md "Project 4 Home")
 
 
 # License
