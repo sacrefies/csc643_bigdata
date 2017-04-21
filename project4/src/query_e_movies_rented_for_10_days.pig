@@ -91,7 +91,7 @@ rented = FILTER rental
          BY DaysBetween(
              ToDate(REPLACE(return_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss'),
              ToDate(REPLACE(rental_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss')
-             ) == 10;
+             ) >= 5;
 -- we need the inventory_ids only
 rented_inventory = FOREACH rented GENERATE inventory_id as inventory_id:int;
 -- get inventory by store, only inventory_id, film_id are needed:
@@ -106,5 +106,5 @@ films = FOREACH (JOIN filmIds by film_id, film by film_id)
                  film::title AS title:chararray;
 final = DISTINCT films;
 
-STORE final INTO '$outputDir/query_e_result.csv'
-USING org.apache.pig.piggybank.storage.CSVExcelStorage(',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER')
+STORE final INTO '$outputDir/query_e_result'
+USING org.apache.pig.piggybank.storage.CSVExcelStorage(',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
