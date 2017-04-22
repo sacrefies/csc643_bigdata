@@ -69,10 +69,7 @@ actor_names = FOREACH (JOIN actors BY actor_id, actor_ids BY actor_id)
                   actors::lname AS last_name:chararray;
 ordered_actors = FOREACH (ORDER actor_names BY first_name, last_name)
                  GENERATE actor_id,
-                          CONCAT(
-                              actor_names::first_name,
-                              ' ',
-                              actor_names::last_name) AS actor_name:chararray;
+                          CONCAT(first_name, ' ', last_name) AS actor_name:chararray;
 
 STORE ordered_actors INTO '$outputDir/query_f_result'
 USING org.apache.pig.piggybank.storage.CSVExcelStorage(',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
