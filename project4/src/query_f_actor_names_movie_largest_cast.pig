@@ -30,13 +30,13 @@
 
 -- data loading: be aware of the EOL that in the data files: It's Windows CRLF.
 film_actors = LOAD '$inputDir/film_actor.csv'
-        USING CSVExcelStorage(
+        USING org.apache.pig.piggybank.storage.CSVExcelStorage(
             ',', 'NO_MULTILINE',
              'WINDOWS', 'SKIP_INPUT_HEADER')
         AS (actor_id:long, film_id:long);
 
 actors = LOAD '$inputDir/actor.csv'
-       USING CSVExcelStorage(
+       USING org.apache.pig.piggybank.storage.CSVExcelStorage(
            ',', 'NO_MULTILINE',
             'WINDOWS', 'SKIP_INPUT_HEADER')
        AS (actor_id:long, fname:chararray, lname:chararray);
