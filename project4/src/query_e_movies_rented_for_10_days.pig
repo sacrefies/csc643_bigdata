@@ -28,6 +28,9 @@
 -- Data files involved:
 --    film, inventory, rental, store, staff
 
+-- preparation: clean up the output dir
+fs -rm -r $outputDir/query_e_result
+
 -- data loading: be aware of the EOL that in the data files: It's Windows CRLF.
 staff = LOAD '$inputDir/staff.csv'
         USING org.apache.pig.piggybank.storage.CSVExcelStorage(
