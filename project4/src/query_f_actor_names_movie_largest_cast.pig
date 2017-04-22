@@ -74,5 +74,5 @@ ordered_actors = FOREACH (ORDER actor_names BY first_name, last_name)
                               ' ',
                               actor_names::last_name) AS actor_name:chararray;
 
-STORE name_list INTO '$outputDir/query_f_result'
+STORE ordered_actors INTO '$outputDir/query_f_result'
 USING org.apache.pig.piggybank.storage.CSVExcelStorage(',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
