@@ -28,8 +28,6 @@
 -- Data files involved:
 --    film_actor, actor
 
--- preparation: clean up the output dir
-fs -rm -r $outputDir/query_f_result
 
 -- data loading: be aware of the EOL that in the data files: It's Windows CRLF.
 film_actors = LOAD '$inputDir/film_actor.csv'
