@@ -22,7 +22,7 @@
 -- I.E.:
 --     $ pig -param inputDir=/p4/data -param outputDir=/p4/out -f mypig.pig -x mapreduce
 -- Or use a parameter file:
---     $ pig -param_file ./parameters -f mypig.pig -x mapreduce
+--     $  pig -param_file parameters -f query_f_actor_names_movie_largest_cast.pig -x mapreduce
 -- Please note that -param_file must be put before -f.
 --
 -- Data files involved:
@@ -30,13 +30,13 @@
 
 -- data loading: be aware of the EOL that in the data files: It's Windows CRLF.
 film_actors = LOAD '$inputDir/film_actor.csv'
-        USING org.apache.pig.piggybank.storage.CSVExcelStorage(
+        USING CSVExcelStorage(
             ',', 'NO_MULTILINE',
              'WINDOWS', 'SKIP_INPUT_HEADER')
         AS (actor_id:long, film_id:long);
 
 actors = LOAD '$inputDir/actor.csv'
-       USING org.apache.pig.piggybank.storage.CSVExcelStorage(
+       USING CSVExcelStorage(
            ',', 'NO_MULTILINE',
             'WINDOWS', 'SKIP_INPUT_HEADER')
        AS (actor_id:long, fname:chararray, lname:chararray);
