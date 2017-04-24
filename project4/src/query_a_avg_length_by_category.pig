@@ -59,4 +59,6 @@ x = foreach connect2 generate
     film::length as film_length;
 gp = group x by (category_id, category_name);
 avg = foreach gp generate FLATTEN(group), AVG(x.film_length);
-DUMP avg;
+
+STORE avg INTO '$outputDir/query_a_result';
+USING org.apache.pig.piggybank.storage.CSVExcelStorage(',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');

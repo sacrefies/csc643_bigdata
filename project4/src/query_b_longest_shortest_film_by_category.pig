@@ -63,4 +63,6 @@ max = ORDER avg BY avg_length DESC;
 limit_min = LIMIT min 1;
 limit_max = LIMIT max 1;
 result = UNION limit_max, limit_min;
-DUMP result;
+
+STORE result INTO '$outputDir/query_b_result';
+USING org.apache.pig.piggybank.storage.CSVExcelStorage(',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
