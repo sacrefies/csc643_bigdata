@@ -92,7 +92,7 @@ rented = FILTER rental
          BY DaysBetween(
              ToDate(REPLACE(return_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss'),
              ToDate(REPLACE(rental_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss')
-             ) >= 5;
+             ) + 1 == 10;
 -- we need the inventory_ids only
 rented_inventory = FOREACH rented GENERATE inventory_id as inventory_id:int;
 -- get inventory by store, only inventory_id, film_id are needed:
