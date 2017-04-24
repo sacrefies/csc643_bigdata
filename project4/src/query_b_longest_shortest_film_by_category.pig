@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 
--- This Pig script is for the 1st query:
+-- This Pig script is for the 2nd query:
 --    Which categories have the longest and shortest average film lengths?
 --
 -- This script takes 2 command line arguments, 'inputDir' and 'outputDir'
