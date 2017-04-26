@@ -46,7 +46,7 @@ Follow the following steps:
     ```
 1. Enter the `grunt` interactive shell with this command:
     ```bash
-    $ pig
+    $ pig -x mapreduce
     ```
     Then the shell should be launched, as the following:
     ```bash

@@ -29,15 +29,21 @@
 
 
 category = LOAD '$inputDir/category.csv'
-           USING org.apache.pig.piggybank.storage.CSVExcelStorage(',')
+           USING org.apache.pig.piggybank.storage.CSVExcelStorage(
+               ',', 'NO_MULTILINE',
+                'WINDOWS', 'SKIP_INPUT_HEADER')
            AS (category_id: int, name: chararray);
 
 film_category = LOAD '$inputDir/film_category.csv'
-                USING org.apache.pig.piggybank.storage.CSVExcelStorage(',')
+                USING org.apache.pig.piggybank.storage.CSVExcelStorage(
+                    ',', 'NO_MULTILINE',
+                     'WINDOWS', 'SKIP_INPUT_HEADER')
                 AS (film_id: int, category_id: int);
 
 film = LOAD '$inputDir/film.csv'
-       USING org.apache.pig.piggybank.storage.CSVExcelStorage(',')
+       USING org.apache.pig.piggybank.storage.CSVExcelStorage(
+           ',', 'NO_MULTILINE',
+            'WINDOWS', 'SKIP_INPUT_HEADER')
        AS (film_id: int,
            title: chararray,
            description: chararray,
