@@ -65,7 +65,7 @@ The following figure shows the relations that are separately stored in the `.csv
 
 ## Implementation
 By using the [Apache Pig Latin][pig_releases], the `Hadoop` map/reduce process can be abstracted and transformed to a script in the relation algebra style. In this fashion, a map/reduce process can be simplified and implemented with flexibility. Generally speaking, a `Pig` script follows the below procedure:
-```sql
+```piglatin
 -- loading data
 A = LOAD 'my_data.txt' USING PigStorage(',') AS (f1:int, f2:int);
 -- processing
@@ -92,7 +92,7 @@ outputDir = '/p4/output'
 *Snippet 2: The Parameter File Content*
 
 These 2 parameters are used by the scripts to locate the input files and the output result file. The below code snippet shows an example:
-```sql
+```piglatin
 -- read in the data
 actors = LOAD '$inputDir/actor.csv' USING PigStorage(',');
 -- processing
@@ -117,7 +117,7 @@ $ pig -param inputDir=/p4/input -param outputDir=/p4/output -x mapreduce -f quer
 The data files for the input are typical `.csv` files which have column headers with the `CRLF` line endings. They cannot be processed directly by the built-in class `PigStorage` unless the columns headers are taken out.
 
 The library `piggbank` has a class, `CSVExcelStorage`, which is capable of handling `.csv` files, with or without headers. So it's introduced to this project. `piggybank` is by default included by the `Pig` installation package, however it's not a built-in class. The full qualification name is required to use the class `CSVExcelStorage`. I.E.:
-```sql
+```piglatin
 category = LOAD '$inputDir/category.csv'
            USING org.apache.pig.piggybank.storage.CSVExcelStorage(
                ',', 'NO_MULTILINE',
@@ -130,7 +130,7 @@ category = LOAD '$inputDir/category.csv'
 This problem is asking for a sequence of queries which in the end generate a list of the categories with the average length of films. The involved data files are `category.csv`, `film_category.csv` and `film.csv`.
 
 The below code snippet shows a few lines of the script:
-```sql
+```piglatin
 category = LOAD '$inputDir/category.csv'
            USING org.apache.pig.piggybank.storage.CSVExcelStorage(
                ',', 'NO_MULTILINE',
@@ -149,6 +149,10 @@ avg = ... -- calculate the averages
 
 STORE avg INTO '$outputDir/query_a_result';
 USING org.apache.pig.piggybank.storage.CSVExcelStorage(',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
+```
+
+The below snippet shows a few sample lines captured from the result file:
+```csv
 ```
 
 ### Query B
@@ -170,7 +174,7 @@ The scripts should run in `mapreduce` mode to use `HDFS` and `Yarn`. Hence, the 
 > 1. The [Apache Pig Latin][pig_releases] subsystem for `Hadoop` has been installed
 > 1. All the files and subdirectories of this project are uploaded and reside under `/home/hduser/p4` on the `NameNode`.
 
-Take the following steps to config and run the scripts:
+Take the following steps to configure and run the scripts:
 1. Log into the `NameNode`
 1. Create the input/output directories for this project in `HDFS`:
     ```bash
@@ -213,6 +217,9 @@ Team 1 consists of three members, who are:
 + Mingyuan Li *(Developer)*
 
 <!-- Reference links -->
+[apache_hadoop]: http://hadoop.apache.org/  "Apache Hadoop Project Home"
 [hadoop_releases]: http://hadoop.apache.org/releases.html "Apache Hadoop Releases"
 [pig_getstarted]: http://pig.apache.org/docs/r0.16.0/start.html#Pig+Setup "Getting Started"
 [pig_releases]: http://hadoop.apache.org/pig/releases.html "PIG Releases"
+[ranking]: ranking.html "Team Member Efforts & Contributions"
+[pig_latin]: https://pig.apache.org/ "Apache Pig Latin Home"
