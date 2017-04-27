@@ -55,21 +55,22 @@ max_actor_counts = LIMIT sorted_actor_counts 1;
 films_max_actor_counts = FOREACH (
                              JOIN sorted_actor_counts BY actor_count,
                                   max_actor_counts BY actor_count)
-                        GENERATE sorted_actor_counts::film_id
-                        AS film_id:long;
+                         GENERATE
+                             sorted_actor_counts::film_id AS film_id:long;
 -- get the actors in the films from films_max_actor_counts
 actor_ids = DISTINCT (FOREACH (
-    JOIN film_actors BY film_id,
-    films_max_actor_counts BY film_id)
-    GENERATE film_actors::actor_id AS actor_id:long);
+                        JOIN film_actors BY film_id,
+                             films_max_actor_counts BY film_id)
+                      GENERATE
+                          film_actors::actor_id AS actor_id:long);
 -- generate actor names
 actor_names = FOREACH (JOIN actors BY actor_id, actor_ids BY actor_id)
               GENERATE
                   actors::actor_id AS actor_id:long,
                   actors::fname AS first_name:chararray,
                   actors::lname AS last_name:chararray;
-ordered_actors = FOREACH (ORDER actor_names BY last_name, first_name)
-                 GENERATE actor_id, first_name, last_name;
+-- order the names
+ordered_actors = ORDER actor_names BY last_name, first_name;
 
 STORE ordered_actors INTO '$outputDir/query_f_result'
 USING org.apache.pig.piggybank.storage.CSVExcelStorage(
