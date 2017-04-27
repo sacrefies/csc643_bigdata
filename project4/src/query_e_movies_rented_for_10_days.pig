@@ -104,7 +104,7 @@ unique_films = DISTINCT (
     GENERATE film_id AS film_id:int);
 -- get the count
 final = FOREACH (GROUP unique_films ALL)
-        GENERATE COUNT(unique_films) as movie_count
+        GENERATE COUNT(unique_films) as movie_count;
 
 STORE final INTO '$outputDir/query_e_result'
 USING org.apache.pig.piggybank.storage.CSVExcelStorage(
