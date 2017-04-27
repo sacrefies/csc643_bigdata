@@ -74,7 +74,7 @@ limit_max = LIMIT max 1;
 set default_parallel 1;
 result = UNION limit_max, limit_min;
 gpResult = GROUP result BY 1;
-finalResult = FOREACH gpResult GENERATE FLATTEN(result);
+finalResult = FOREACH gpResult GENERATE FLATTEN(result) AS (category_id, category_name, avg_length);
 
 
 STORE finalResult INTO '$outputDir/query_b_result'
