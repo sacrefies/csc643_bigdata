@@ -71,8 +71,12 @@ min = ORDER avg BY avg_length;
 max = ORDER avg BY avg_length DESC;
 limit_min = LIMIT min 1;
 limit_max = LIMIT max 1;
+set default_parallel 1;
 result = UNION limit_max, limit_min;
+gpResult = GROUP result BY 1;
+finalResult = FOREACH gpResult GENERATE FLATTEN(result);
 
-STORE result INTO '$outputDir/query_b_result'
+
+STORE finalResult INTO '$outputDir/query_b_result'
 USING org.apache.pig.piggybank.storage.CSVExcelStorage(
     ',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
