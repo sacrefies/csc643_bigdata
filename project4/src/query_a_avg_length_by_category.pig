@@ -56,15 +56,19 @@ film = LOAD '$inputDir/film.csv'
            relacement_cost: double,
            rating: chararray,
            special_features: chararray);
+
 connect1 = JOIN category BY category_id, film_category BY category_id;
 connect2 = JOIN connect1 BY film_category::film_id, film BY film_id;
-x = foreach connect2 generate
-    connect1::category::category_id as category_id,
-    connect1::category::name as category_name,
-    connect1::film_category::film_id as film_id,
-    film::length as film_length;
-gp = group x by (category_id, category_name);
-avg = foreach gp generate FLATTEN(group), AVG(x.film_length);
 
-STORE avg INTO '$outputDir/query_a_result';
-USING org.apache.pig.piggybank.storage.CSVExcelStorage(',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
+x = FOREACH connect2 GENERATE
+    connect1::category::category_id AS category_id,
+    connect1::category::name AS category_name,
+    connect1::film_category::film_id AS film_id,
+    film::length AS film_length;
+
+gp = GROUP x BY (category_id, category_name);
+avg = FOREACH gp GENERATE FLATTEN(group), AVG(x.film_length);
+
+STORE avg INTO '$outputDir/query_a_result'
+USING org.apache.pig.piggybank.storage.CSVExcelStorage(
+    ',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
