@@ -66,7 +66,7 @@ x = FOREACH connect2 GENERATE
     film::length AS film_length;
 
 gp = GROUP x BY (category_id, category_name);
-avg = FOREACH gp GENERATE FLATTEN(group), AVG(x.film_length) AS avg_length;
+avg = FOREACH gp GENERATE FLATTEN(group), ROUND_TO(AVG(x.film_length), 2) AS avg_length;
 min = ORDER avg BY avg_length;
 max = ORDER avg BY avg_length DESC;
 limit_min = LIMIT min 1;
