@@ -67,8 +67,12 @@ x = FOREACH connect2 GENERATE
     film::length AS film_length;
 
 gp = GROUP x BY category_name;
-avg = FOREACH gp GENERATE group AS category_name, ROUND_TO(AVG(x.film_length), 2) AS avg_film_length;
+avg = FOREACH gp
+      GENERATE
+          group AS category_name,
+          ROUND_TO(AVG(x.film_length), 2) AS avg_film_length;
+result = ORDER avg BY category_name;
 
-STORE avg INTO '$outputDir/query_a_result'
+STORE result INTO '$outputDir/query_a_result'
 USING org.apache.pig.piggybank.storage.CSVExcelStorage(
     ',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
