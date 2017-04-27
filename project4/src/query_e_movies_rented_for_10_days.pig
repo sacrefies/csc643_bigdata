@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 
--- This Pig script is for the 4th query:
+-- This Pig script is for the 5th query:
 --    How many distinct movies were rented for exactly 10 days
 --    from the store where Mike works?
 --
@@ -98,14 +98,14 @@ rented_inventory = FOREACH rented GENERATE inventory_id as inventory_id:int;
 -- get inventory by store, only inventory_id, film_id are needed:
 film_inventory = FOREACH (JOIN mike BY store_id, stores BY store_id, inventory by store_id)
                  GENERATE inventory_id, film_id;
--- get film_ids whose rental duration are more than 10 days
-filmIds = FOREACH (JOIN rented_inventory BY inventory_id, film_inventory BY inventory_id)
-        GENERATE film_id AS film_id:int;
-
-films = FOREACH (JOIN filmIds by film_id, film by film_id)
-        GENERATE film::film_id AS film_id:int,
-                 film::title AS title:chararray;
-final = DISTINCT films;
+-- get unique ids
+unique_films = DISTINCT (
+    FOREACH (JOIN rented_inventory BY inventory_id, film_inventory BY inventory_id)
+    GENERATE film_id AS film_id:int);
+-- get the count
+final = FOREACH (GROUP unique_films ALL)
+        GENERATE COUNT(unique_films) as movie_count
 
 STORE final INTO '$outputDir/query_e_result'
-USING org.apache.pig.piggybank.storage.CSVExcelStorage(',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
+USING org.apache.pig.piggybank.storage.CSVExcelStorage(
+    ',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');

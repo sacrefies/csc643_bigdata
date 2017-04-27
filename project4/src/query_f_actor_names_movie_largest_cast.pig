@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 
--- This Pig script is for the 4th query:
+-- This Pig script is for the 6th query:
 --    Alphabetically list actors
 --    who appeared in the movie with the largest cast of actors.
 --
@@ -68,9 +68,9 @@ actor_names = FOREACH (JOIN actors BY actor_id, actor_ids BY actor_id)
                   actors::actor_id AS actor_id:long,
                   actors::fname AS first_name:chararray,
                   actors::lname AS last_name:chararray;
-ordered_actors = FOREACH (ORDER actor_names BY first_name, last_name)
-                 GENERATE actor_id,
-                          CONCAT(first_name, ' ', last_name) AS actor_name:chararray;
+ordered_actors = FOREACH (ORDER actor_names BY last_name, first_name)
+                 GENERATE actor_id, first_name, last_name;
 
 STORE ordered_actors INTO '$outputDir/query_f_result'
-USING org.apache.pig.piggybank.storage.CSVExcelStorage(',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
+USING org.apache.pig.piggybank.storage.CSVExcelStorage(
+    ',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
