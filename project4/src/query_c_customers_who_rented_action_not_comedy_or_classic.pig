@@ -85,38 +85,28 @@ customer = LOAD '$inputDir/customer.csv'
 			 email:chararray,
              address_id:int,
              active:int);
-			 
-table1 = JOIN customer BY customer_id, rental BY customer_id;
-table2 = JOIN table1 BY table1::rental::inventory_id, inventory BY inventory_id;
-table3 = JOIN table2 BY table2::inventory::film_id, film BY film_id;
-table4 = JOIN table3 BY table3::film::film_id, film_category BY film_id;
-table5 = JOIN table4 BY table4::film_category::category_id, category BY category_id;
+-- prepare the information needed
+film_inventory_w_category = JOIN film BY film_id, film_category BY film_id, inventory BY film_id;
+film_full_info = JOIN film_inventory_w_category BY film_category::category_id, category BY category_id;
+film_inventory_rented = JOIN film_full_info BY inventory::inventory_id, rental BY inventory_id;
+customers_who_rented_films = JOIN film_inventory_rented BY rental::customer_id, customer BY customer_id;
+-- generate a smaller table with fields only needed
+customer_film_info = FOREACH customers_who_rented_films
+                     GENERATE customer::customer_id AS customer_id,
+                              customer::first_name AS first_name,
+                              customer::last_name AS last_name,
+                              category::name AS category_name;
+-- customers who have not rented 'Comedy' or 'Classics'
+customers_not_rented_comedy_classic = FILTER customer_film_info BY category_name matches '^(?!(Comedy|Classics)).*$';
+-- customers who have rented 'Action' out of customers_not_rented_comedy_classic
+customers_rented_action = ORDER (DISTINCT (FILTER customers_not_rented_comedy_classic BY category_name matches '^(Action)$'))
+                          BY last_name, first_name;
 
-table6 = FOREACH table5 GENERATE 
-	table1::customer::customer_id AS customer_id,
-	table1::customer::first_name AS first_name,
-	table1::customer::last_name AS last_name,
-	table1::rental::rental_id AS rental_id, 
-	table2::inventory::inventory_id AS inventory_id,
-	table3::film::film_id AS film_id,
-	table4::film_category::category_id AS category_id,
-	table5::category::name AS category_name;
-	
-table7 = FILTER table6 BY ((category_name matches 'Action') 
-							AND NOT (category_name matches 'Comedy')
-							AND NOT (category_name matches 'Classics'));
-							
-table8 = FOREACH table7 GENERATE 
-		table7::customer_id AS customer_id,
-		table7::first_name AS first_name,
-		table7::last_name AS last_name;
-		
-result = GROUP table8 BY customer_id;
+-- customers who have rented 'ACTION' but not 'Comedy' or 'Classics'
+customers_info = FOREACH customers_rented_action
+                 GENERATE first_name as first_name,
+                          last_name as last_name;
 
-STORE result INTO '$outputDir/query_c_result'
+STORE customers_info INTO '$outputDir/query_c_result'
 USING org.apache.pig.piggybank.storage.CSVExcelStorage(
     ',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
-
-
-
-
