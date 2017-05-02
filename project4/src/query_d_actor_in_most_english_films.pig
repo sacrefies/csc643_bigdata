@@ -65,35 +65,18 @@ language = LOAD '$inputDir/language.csv'
        AS (language_id: int,
            name: chararray);
 
-table1 = JOIN film_actor BY film_id, film BY film_id;
-table2 = JOIN table1 BY film::language, language BY language_id;
-table3 = JOIN table2 BY table1::film_actor::actor_id, actor BY actor_id;
-
-table4 = FOREACH table3 GENERATE
-	table2::table1::film_actor::actor_id AS actor_id,
-	table2::table1::film_actor::film_id AS film_id,
-	table2::language::language_id AS language_id,
-	table2::language::name AS language_name,
-    actor::last_name AS last_name;
-
-table5 = FILTER table4 BY (language_name matches 'English');
-
-table6 = GROUP table5 BY actor_id;
-count = FOREACH table6
-        GENERATE
-        group AS actor_id,
-        COUNT(table5) AS actor_count;
-
-table7 = ORDER count BY actor_count DESC;
-
-table8 = LIMIT table7 1;
-
-table9 = JOIN table8 BY actor_id, actor BY actor_id;
-result = FOREACH table9 GENERATE
-         actor::last_name AS last_name,
-         actor::actor_id AS actor_id,
-         table8::actor_count AS count;
-
+english = FILTER language BY name MATCHES '^English$';
+english_films = JOIN film BY language, english by language_id;
+english_film_actors = JOIN film_actor BY film_id, english_films by film::film_id;
+actor_films_counts = FOREACH (GROUP english_film_actors BY film_actor::actor_id)
+                     GENERATE group AS actor_id,
+                              COUNT(english_film_actors) AS actor_count;
+actor_max_film_count = LIMIT (ORDER actor_films_counts BY actor_count DESC) 1;
+which_actor = JOIN actor_max_film_count BY actor_id, actor BY actor_id;
+result = FOREACH which_actor
+         GENERATE actor::actor_id AS actor_id,
+                  actor::first_name AS first_name,
+                  actor::last_name AS last_name;
 
 STORE result INTO '$outputDir/query_d_result'
 USING org.apache.pig.piggybank.storage.CSVExcelStorage(
