@@ -31,44 +31,38 @@
 
 -- data loading: be aware of the EOL that in the data files: It's Windows CRLF.
 film_actors = LOAD '$inputDir/film_actor.csv'
-        USING org.apache.pig.piggybank.storage.CSVExcelStorage(
-            ',', 'NO_MULTILINE',
-             'WINDOWS', 'SKIP_INPUT_HEADER')
-        AS (actor_id:long, film_id:long);
+              USING org.apache.pig.piggybank.storage.CSVExcelStorage(
+                  ',', 'NO_MULTILINE',
+                  'WINDOWS', 'SKIP_INPUT_HEADER')
+              AS (actor_id:long, film_id:long);
 
 actors = LOAD '$inputDir/actor.csv'
-       USING org.apache.pig.piggybank.storage.CSVExcelStorage(
-           ',', 'NO_MULTILINE',
-            'WINDOWS', 'SKIP_INPUT_HEADER')
-       AS (actor_id:long, fname:chararray, lname:chararray);
+         USING org.apache.pig.piggybank.storage.CSVExcelStorage(
+             ',', 'NO_MULTILINE',
+              'WINDOWS', 'SKIP_INPUT_HEADER')
+         AS (actor_id:long, fname:chararray, lname:chararray);
 
 -- group film_actors with actor counts
 actor_counts = FOREACH (GROUP film_actors BY film_id)
-               GENERATE
-                   group as film_id:long,
-                   COUNT(film_actors.$0) as actor_count:long;
+               GENERATE group AS film_id:long,
+                        COUNT(film_actors) AS actor_count:long;
 -- sort film group by actor counts
 sorted_actor_counts = ORDER actor_counts BY actor_count DESC;
 -- top 1: the film which has the maximum actor count
 max_actor_counts = LIMIT sorted_actor_counts 1;
 -- get film ids which have the max count of actors
-films_max_actor_counts = FOREACH (
-                             JOIN sorted_actor_counts BY actor_count,
-                                  max_actor_counts BY actor_count)
-                         GENERATE
-                             sorted_actor_counts::film_id AS film_id:long;
+films_max_actor_counts = FOREACH (JOIN sorted_actor_counts BY actor_count,
+                                       max_actor_counts BY actor_count)
+                         GENERATE sorted_actor_counts::film_id AS film_id;
 -- get the actors in the films from films_max_actor_counts
-actor_ids = DISTINCT (FOREACH (
-                        JOIN film_actors BY film_id,
-                             films_max_actor_counts BY film_id)
-                      GENERATE
-                          film_actors::actor_id AS actor_id:long);
+actor_ids = FOREACH (JOIN film_actors BY film_id, films_max_actor_counts BY film_id)
+            GENERATE film_actors::actor_id AS actor_id;
+actor_ids = DISTINCT actor_ids;
 -- generate actor names
 actor_names = FOREACH (JOIN actors BY actor_id, actor_ids BY actor_id)
-              GENERATE
-                  actors::actor_id AS actor_id:long,
-                  actors::fname AS first_name:chararray,
-                  actors::lname AS last_name:chararray;
+              GENERATE actors::actor_id as actor_id,
+                       actors::fname as first_name,
+                       actors::lname as last_name;
 -- order the names
 ordered_actors = ORDER actor_names BY last_name, first_name;
 
