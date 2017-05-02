@@ -97,16 +97,19 @@ customer_film_info = FOREACH customers_who_rented_films
                               customer::last_name AS last_name,
                               category::name AS category_name;
 -- customers who have not rented 'Comedy' or 'Classics'
-customers_not_rented_comedy_classic = FILTER customer_film_info BY category_name matches '^(?!(Comedy|Classics)).*$';
+customers_rented_comedy_classic = FILTER customer_film_info BY category_name MATCHES '^(Comedy|Classics).*$';
 -- customers who have rented 'Action' out of customers_not_rented_comedy_classic
-customers_rented_action = ORDER (DISTINCT (FILTER customers_not_rented_comedy_classic BY category_name matches '^(Action)$'))
-                          BY last_name, first_name;
-
+customers_rented_action = FILTER customer_film_info BY category_name MATCHES '^(Action)$';
+-- use left join to get the difference betwee customers_rented_comedy_classic and customers_rented_action
+customers_action_in_comedy_classic = JOIN customers_rented_action BY customer_id LEFT,
+                                          customers_rented_comedy_classic BY customer_id;
 -- customers who have rented 'ACTION' but not 'Comedy' or 'Classics'
-customers_info = FOREACH customers_rented_action
-                 GENERATE first_name as first_name,
-                          last_name as last_name;
-
-STORE customers_info INTO '$outputDir/query_c_result'
+customers_info = DISTINCT (FILTER customers_action_in_comedy_classic BY customers_rented_comedy_classic::customer_id is null);
+customers_final = FOREACH customers_info
+                  GENERATE customers_rented_action::customer_id as customer_id,
+                           customers_rented_action::first_name as first_name,
+                           customers_rented_action::last_name as last_name;
+customers_final_ordered = ORDER customers_final BY last_name, first_name;
+STORE customers_final_ordered INTO '$outputDir/query_c_result'
 USING org.apache.pig.piggybank.storage.CSVExcelStorage(
     ',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
