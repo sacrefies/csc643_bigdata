@@ -26,7 +26,7 @@
 -- Please note that -param_file must be put before -f.
 --
 -- Data files involved:
---    film, inventory, rental, store, staff
+--    film, inventory, rental, staff
 
 
 -- data loading: be aware of the EOL that in the data files: It's Windows CRLF.
@@ -34,13 +34,13 @@ staff = LOAD '$inputDir/staff.csv'
         USING org.apache.pig.piggybank.storage.CSVExcelStorage(
             ',', 'NO_MULTILINE',
              'WINDOWS', 'SKIP_INPUT_HEADER')
-        AS (staff_id:int,
+        AS (staff_id:long,
             fname:chararray,
             lname:chararray,
-            address_id:int,
+            address_id:long,
             email:chararray,
-            store_id:int,
-            active:int,
+            store_id:long,
+            active:long,
             username:chararray,
             password:chararray);
 
@@ -48,14 +48,14 @@ film = LOAD '$inputDir/film.csv'
        USING org.apache.pig.piggybank.storage.CSVExcelStorage(
            ',', 'NO_MULTILINE',
             'WINDOWS', 'SKIP_INPUT_HEADER')
-       AS (film_id:int,
+       AS (film_id:long,
            title:chararray,
            description:chararray,
-           release_year:int,
-           language_id:int,
+           release_year:long,
+           language_id:long,
            rental_duration:int,
            rental_rate:double,
-           length:int,
+           length:long,
            replacement_cost:double,
            rating:chararray,
            special_features:chararray);
@@ -64,47 +64,47 @@ inventory = LOAD '$inputDir/inventory.csv'
             USING org.apache.pig.piggybank.storage.CSVExcelStorage(
                 ',', 'NO_MULTILINE',
                 'WINDOWS', 'SKIP_INPUT_HEADER')
-            AS (inventory_id:int,
-                film_id:int,
-                store_id:int);
+            AS (inventory_id:long,
+                film_id:long,
+                store_id:long);
 
 rental = LOAD '$inputDir/rental.csv'
          USING org.apache.pig.piggybank.storage.CSVExcelStorage(
              ',', 'NO_MULTILINE',
              'WINDOWS', 'SKIP_INPUT_HEADER')
-         AS (rental_id:int,
+         AS (rental_id:long,
              rental_date:chararray,
-             inventory_id:int,
-             customer_id:int,
+             inventory_id:long,
+             customer_id:long,
              return_date:chararray,
-             staff_id:int);
-
-stores = LOAD '$inputDir/store.csv'
-         USING org.apache.pig.piggybank.storage.CSVExcelStorage(
-             ',', 'NO_MULTILINE',
-             'WINDOWS', 'SKIP_INPUT_HEADER')
-         AS (store_id:int, address_id:int);
-
--- get Mike
-mike = FILTER staff BY (fname matches '^Mike');
--- get the rented which are more than 10 days
-rented = FILTER rental
-         BY DaysBetween(
-             ToDate(REPLACE(return_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss'),
-             ToDate(REPLACE(rental_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss')
-             ) + 1 == 10;
--- we need the inventory_ids only
-rented_inventory = FOREACH rented GENERATE inventory_id as inventory_id:int;
--- get inventory by store, only inventory_id, film_id are needed:
-film_inventory = FOREACH (JOIN mike BY store_id, stores BY store_id, inventory by store_id)
-                 GENERATE inventory_id, film_id;
+             staff_id:long);
+rented_w_days = FOREACH rental
+                GENERATE rental_id, inventory_id,
+                          DaysBetween(
+                              ToDate(REPLACE(return_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss', 'UTC'),
+                              ToDate(REPLACE(rental_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss', 'UTC')
+                          ) AS days:long,
+                          HoursBetween(
+                              ToDate(REPLACE(return_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss', 'UTC'),
+                              ToDate(REPLACE(rental_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss', 'UTC')
+                          ) AS hours:long;
+-- get Mike's store and inventory
+mike = FILTER staff BY (fname MATCHES '^Mike$');
+stores_mike_inventory = JOIN inventory BY store_id, mike BY store_id;
+stores_mike_inventory = FOREACH stores_mike_inventory
+                        GENERATE inventory::inventory_id AS inventory_id,
+                                 inventory::film_id AS film_id;
+-- rented films for 10 days
+rented_10d = FILTER rented_w_days BY (hours / 24.0 > 9.0) AND (days == 9);
+rented_mike_store_10d = JOIN rented_10d BY inventory_id,
+                             stores_mike_inventory BY inventory_id;
+films_10d = FOREACH rented_mike_store_10d
+            GENERATE stores_mike_inventory::film_id AS film_id;
 -- get unique ids
-unique_films = DISTINCT (
-    FOREACH (JOIN rented_inventory BY inventory_id, film_inventory BY inventory_id)
-    GENERATE film_id AS film_id:int);
+unique_films_10d = DISTINCT films_10d;
 -- get the count
-final = FOREACH (GROUP unique_films ALL)
-        GENERATE COUNT(unique_films);
+final = FOREACH (GROUP unique_films_10d ALL)
+        GENERATE COUNT(unique_films_10d);
 
 STORE final INTO '$outputDir/query_e_result'
 USING org.apache.pig.piggybank.storage.CSVExcelStorage(
