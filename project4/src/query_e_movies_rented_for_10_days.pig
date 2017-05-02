@@ -80,22 +80,17 @@ rental = LOAD '$inputDir/rental.csv'
              staff_id:long);
 rented_w_days = FOREACH rental
                 GENERATE rental_id, inventory_id,
-                          DaysBetween(
-                              ToDate(REPLACE(return_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss', 'UTC'),
-                              ToDate(REPLACE(rental_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss', 'UTC')
-                          ) AS days:long,
-                          HoursBetween(
-                              ToDate(REPLACE(return_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss', 'UTC'),
-                              ToDate(REPLACE(rental_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss', 'UTC')
-                          ) AS hours:long;
+                         ToDate(REGEX_EXTRACT(return_date, '(\\d{4}-\\d{2}-\\d{2})', 1)) AS return_date,
+                         ToDate(REGEX_EXTRACT(rental_date, '(\\d{4}-\\d{2}-\\d{2})', 1)) AS rental_date;
+-- rented films for 10 days
+rented_10d = FILTER rented_w_days BY DaysBetween(return_date,  rental_date) == 10;
 -- get Mike's store and inventory
 mike = FILTER staff BY (fname MATCHES '^Mike$');
 stores_mike_inventory = JOIN inventory BY store_id, mike BY store_id;
 stores_mike_inventory = FOREACH stores_mike_inventory
                         GENERATE inventory::inventory_id AS inventory_id,
                                  inventory::film_id AS film_id;
--- rented films for 10 days
-rented_10d = FILTER rented_w_days BY (hours / 24.0 > 9.0) AND (days == 9);
+-- films that were rented in the store that Mike works
 rented_mike_store_10d = JOIN rented_10d BY inventory_id,
                              stores_mike_inventory BY inventory_id;
 films_10d = FOREACH rented_mike_store_10d
