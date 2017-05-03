@@ -66,13 +66,13 @@ language = LOAD '$inputDir/language.csv'
            name: chararray);
 
 english = FILTER language BY name MATCHES '^English$';
-english_films = JOIN film BY language, english by language_id;
-english_film_actors = JOIN film_actor BY film_id, english_films by film::film_id;
+english_films = JOIN film BY language, english by language_id USING 'replicated';
+english_film_actors = JOIN film_actor BY film_id, english_films by film::film_id USING 'replicated';
 actor_films_counts = FOREACH (GROUP english_film_actors BY film_actor::actor_id)
                      GENERATE group AS actor_id,
                               COUNT(english_film_actors) AS actor_count;
 actor_max_film_count = LIMIT (ORDER actor_films_counts BY actor_count DESC) 1;
-which_actor = JOIN actor_max_film_count BY actor_id, actor BY actor_id;
+which_actor = JOIN actor_max_film_count BY actor_id, actor BY actor_id USING 'replicated';
 result = FOREACH which_actor
          GENERATE actor::actor_id AS actor_id,
                   actor::first_name AS first_name,

@@ -56,8 +56,8 @@ film = LOAD '$inputDir/film.csv'
            rating: chararray,
            special_features: chararray);
 -- films with categories
-categorized_films = JOIN category BY category_id, film_category BY category_id;
-categorized_films_full = JOIN categorized_films BY film_category::film_id, film BY film_id;
+categorized_films = JOIN category BY category_id, film_category BY category_id USING 'replicated';
+categorized_films_full = JOIN categorized_films BY film_category::film_id, film BY film_id USING 'replicated';
 -- narrow the columns
 categorized_films = FOREACH categorized_films_full
                     GENERATE category::category_id AS category_id,

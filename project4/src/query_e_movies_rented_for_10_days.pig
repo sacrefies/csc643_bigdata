@@ -86,13 +86,13 @@ rented_w_days = FOREACH rental
 rented_10d = FILTER rented_w_days BY DaysBetween(return_date,  rental_date) == 10;
 -- get Mike's store and inventory
 mike = FILTER staff BY (fname MATCHES '^Mike$');
-stores_mike_inventory = JOIN inventory BY store_id, mike BY store_id;
+stores_mike_inventory = JOIN inventory BY store_id, mike BY store_id USING 'replicated';
 stores_mike_inventory = FOREACH stores_mike_inventory
                         GENERATE inventory::inventory_id AS inventory_id,
                                  inventory::film_id AS film_id;
 -- films that were rented in the store that Mike works
 rented_mike_store_10d = JOIN rented_10d BY inventory_id,
-                             stores_mike_inventory BY inventory_id;
+                             stores_mike_inventory BY inventory_id USING 'replicated';
 films_10d = FOREACH rented_mike_store_10d
             GENERATE stores_mike_inventory::film_id AS film_id;
 -- get unique ids

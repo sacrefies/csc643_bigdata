@@ -51,15 +51,15 @@ sorted_actor_counts = ORDER actor_counts BY actor_count DESC;
 -- top 1: the film which has the maximum actor count
 max_actor_counts = LIMIT sorted_actor_counts 1;
 -- get film ids which have the max count of actors
-films_max_actor_counts = FOREACH (JOIN sorted_actor_counts BY actor_count,
-                                       max_actor_counts BY actor_count)
-                         GENERATE sorted_actor_counts::film_id AS film_id;
+tmp = JOIN sorted_actor_counts BY actor_count, max_actor_counts BY actor_count USING 'replicated';
+films_max_actor_counts = FOREACH tmp GENERATE sorted_actor_counts::film_id AS film_id;
 -- get the actors in the films from films_max_actor_counts
-actor_ids = FOREACH (JOIN film_actors BY film_id, films_max_actor_counts BY film_id)
-            GENERATE film_actors::actor_id AS actor_id;
+tmp = JOIN film_actors BY film_id, films_max_actor_counts BY film_id USING 'replicated';
+actor_ids = FOREACH tmp GENERATE film_actors::actor_id AS actor_id;
 actor_ids = DISTINCT actor_ids;
 -- generate actor names
-actor_names = FOREACH (JOIN actors BY actor_id, actor_ids BY actor_id)
+tmp = JOIN actors BY actor_id, actor_ids BY actor_id USING 'replicated';
+actor_names = FOREACH tmp
               GENERATE actors::actor_id as actor_id,
                        actors::fname as first_name,
                        actors::lname as last_name;

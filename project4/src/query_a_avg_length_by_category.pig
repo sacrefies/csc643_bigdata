@@ -33,44 +33,43 @@ category = LOAD '$inputDir/category.csv'
            USING org.apache.pig.piggybank.storage.CSVExcelStorage(
                ',', 'NO_MULTILINE',
                 'WINDOWS', 'SKIP_INPUT_HEADER')
-           AS (category_id: int, name: chararray);
+           AS (category_id: long, name: chararray);
 
 film_category = LOAD '$inputDir/film_category.csv'
                 USING org.apache.pig.piggybank.storage.CSVExcelStorage(
                     ',', 'NO_MULTILINE',
                      'WINDOWS', 'SKIP_INPUT_HEADER')
-                AS (film_id: int, category_id: int);
+                AS (film_id: long, category_id: long);
 
 film = LOAD '$inputDir/film.csv'
        USING org.apache.pig.piggybank.storage.CSVExcelStorage(
            ',', 'NO_MULTILINE',
             'WINDOWS', 'SKIP_INPUT_HEADER')
-       AS (film_id: int,
+       AS (film_id: long,
            title: chararray,
            description: chararray,
-           release_year: int,
-           language: int,
-           rental_duration: int,
+           release_year: long,
+           language: long,
+           rental_duration: long,
            rental_rate: double,
-           length: int,
+           length: long,
            relacement_cost: double,
            rating: chararray,
            special_features: chararray);
-
-connect1 = JOIN category BY category_id, film_category BY category_id;
-connect2 = JOIN connect1 BY film_category::film_id, film BY film_id;
-
-x = FOREACH connect2 GENERATE
-    connect1::category::category_id AS category_id,
-    connect1::category::name AS category_name,
-    connect1::film_category::film_id AS film_id,
-    film::length AS film_length;
-
-gp = GROUP x BY category_name;
-avg = FOREACH gp
-      GENERATE
-          group AS category_name,
-          ROUND_TO(AVG(x.film_length), 2) AS avg_film_length;
+-- films with categories
+categorized_films = JOIN category BY category_id, film_category BY category_id USING 'replicated';
+categorized_films_full = JOIN categorized_films BY film_category::film_id, film BY film_id USING 'replicated';
+-- narrow the columns
+categorized_films = FOREACH categorized_films_full
+                    GENERATE category::category_id AS category_id,
+                             category::name AS category_name,
+                             film::film_id AS film_id,
+                             film::length AS film_length;
+-- compute the avg
+categorized = GROUP categorized_films BY (category_id, category_name);
+avg = FOREACH categorized
+      GENERATE FLATTEN(group),
+               ROUND_TO(AVG(categorized_films.film_length), 2) AS avg_length;
 result = ORDER avg BY category_name;
 
 STORE result INTO '$outputDir/query_a_result'
