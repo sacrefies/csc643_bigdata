@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
+
 # Project 4: Apache Pig Latin Exercise
 
 *This project is developed by* ***Team 1***:
@@ -64,15 +65,13 @@ The following figure shows the relations that are separately stored in the `.csv
 *Apache License V2.0* is applied to this project.
 
 ## Implementation
-By using the [Apache Pig Latin][pig_releases], the `Hadoop` map/reduce process can be abstracted and transformed to a script in the relation algebra style. In this fashion, a map/reduce process can be simplified and implemented with flexibility. Generally speaking, a `Pig` script follows the below procedure:
-```sql
+By using the [Apache Pig Latin][pig_releases], the `Hadoop` map/reduce process can be abstracted and transformed to a script like `SQL`. In this fashion, a map/reduce process can be simplified and implemented with flexibility. Generally speaking, a `Pig` script follows the steps as the example shown below:
+```piglatin
 -- loading data
 A = LOAD 'my_data.txt' USING PigStorage(',') AS (f1:int, f2:int);
 -- processing
 GP = GROUP A BY f1;
-AVG_GP = FOREACH GP GENERATE
-               group AS g:int,
-               AVG(A.$1) AS f2_avg:double;
+AVG_GP = FOREACH ...;
 -- saving data
 STORE AVG_GP INTO 'output' USING PigStorage(',');
 ```
@@ -92,13 +91,13 @@ outputDir = '/p4/output'
 *Snippet 2: The Parameter File Content*
 
 These 2 parameters are used by the scripts to locate the input files and the output result file. The below code snippet shows an example:
-```sql
+```piglatin
 -- read in the data
 actors = LOAD '$inputDir/actor.csv' USING PigStorage(',');
 -- processing
-...
+A = ...;
 -- Save the map/reduce result
-STORE actors INTO '$outputDir/query_result' USING PigStorage(',');
+STORE A INTO '$outputDir/query_result' USING PigStorage(',');
 ```
 
 The following command shows how to run a script with a parameter file:
@@ -117,7 +116,7 @@ $ pig -param inputDir=/p4/input -param outputDir=/p4/output -x mapreduce -f quer
 The data files for the input are typical `.csv` files which have column headers with the `CRLF` line endings. They cannot be processed directly by the built-in class `PigStorage` unless the columns headers are taken out.
 
 The library `piggbank` has a class, `CSVExcelStorage`, which is capable of handling `.csv` files, with or without headers. So it's introduced to this project. `piggybank` is by default included by the `Pig` installation package, however it's not a built-in class. The full qualification name is required to use the class `CSVExcelStorage`. I.E.:
-```sql
+```piglatin
 category = LOAD '$inputDir/category.csv'
            USING org.apache.pig.piggybank.storage.CSVExcelStorage(
                ',', 'NO_MULTILINE',
@@ -130,27 +129,27 @@ category = LOAD '$inputDir/category.csv'
 This problem is asking for a sequence of queries which in the end generate a list of the categories with the average length of films. The involved data files are `category.csv`, `film_category.csv` and `film.csv`.
 
 The below code snippet shows a few lines of the script:
-```sql
+```piglatin
 category = LOAD '$inputDir/category.csv'
            USING org.apache.pig.piggybank.storage.CSVExcelStorage(
                ',', 'NO_MULTILINE',
                 'WINDOWS', 'SKIP_INPUT_HEADER')
-           AS (category_id: int, name: chararray);
+           AS (category_id: long, name: chararray);
 
-film_category = LOAD '$inputDir/film_category.csv' ...
+film_category = LOAD '$inputDir/film_category.csv' ...;
 
-film = LOAD '$inputDir/film.csv' ...
-
-x = ...  -- join the data sets
-
-gp = GROUP x BY category_name;
-
-avg = ... -- calculate the averages
+film = LOAD '$inputDir/film.csv' ...;
+-- films with categories
+categorized_films = ...;
+...;
+-- compute the avg
+categorized = GROUP categorized_films BY (category_id, category_name);
+avg = FOREACH categorized
+      GENERATE FLATTEN(group),
+               ROUND_TO(AVG(categorized_films.film_length), 2) AS avg_length;
 result = ORDER avg BY category_name;
 
-STORE result INTO '$outputDir/query_a_result'
-USING org.apache.pig.piggybank.storage.CSVExcelStorage(
-    ',', 'NO_MULTILINE', 'UNIX', 'WRITE_OUTPUT_HEADER');
+STORE result INTO '$outputDir/query_a_result' ...;
 ```
 *Snippet 6: Query A*
 
@@ -181,38 +180,28 @@ Travel,         113.32
 This problem is asking for a computed list of the film categories which have the longest average film length and the shortest average film length. The involved data files are `category.csv`, `film_category.csv`, `film.csv`.
 
 The below code snippet shows a few lines of the script:
-```sql
-category = LOAD '$inputDir/category.csv'
-           USING org.apache.pig.piggybank.storage.CSVExcelStorage(
-               ',', 'NO_MULTILINE',
-                'WINDOWS', 'SKIP_INPUT_HEADER')
-           AS (category_id: int, name: chararray);
+```piglatin
+category = LOAD '$inputDir/category.csv' ...;
 
 film_category = LOAD '$inputDir/film_category.csv' ...;
 
 film = LOAD '$inputDir/film.csv' ...;
-
-connect1 = JOIN category BY category_id, film_category BY category_id;
-connect2 = JOIN connect1 BY film_category::film_id, film BY film_id;
-
-x = ...; -- select only the columns that are needed.
-
-
-avg = ...; -- compute the averages in each category.
-
+-- films with categories
+categorized_films = ...;
+...;
+avg = FOREACH ...;
 -- get max/min
-limit_min = LIMIT (ORDER avg BY avg_length) 1;
-limit_max = LIMIT (ORDER avg BY avg_length DESC) 1;
+min_avg = LIMIT (ORDER avg BY avg_length) 1;
+max_avg = LIMIT (ORDER avg BY avg_length DESC) 1;
 
 set default_parallel 1;
-result = UNION limit_max, limit_min;
--- combine the 2 output files into 1
+result = UNION max_avg, min_avg;
+--gpResult = GROUP result BY 1;
 finalResult = FOREACH (GROUP result BY 1)
-              GENERATE
-                  FLATTEN(result)
+              GENERATE FLATTEN(result)
               AS (category_id, category_name, avg_length);
 
-STORE finalResult INTO ...; -- saving the result
+STORE finalResult INTO '$outputDir/query_b_result' ...;
 ```
 *Snippet 8: Query B*
 
@@ -220,73 +209,112 @@ The below lines shows the content captured from the result file:
 ```bash
 category_id,    category_name,  avg_length
 ------------    --------------  ----------
-15,             Sports,         128.2
 14,             Sci-Fi,         108.2
-
+15,             Sports,         128.2
 ```
 *Snippet 9: The Result of Query B*
 
 ### Query C
+This problem is asking for a list of customers who have rented action movies but not comedy or classic movies. The involved data files are `rental.csv`, `customer.csv`, `inventory.csv`, `film.csv`, `film_category.csv`, `category.csv`.
+
 The below code snippet shows a few lines of the script:
-```sql
+```piglatin
+-- prepare the information needed
+...;
+-- customers who have not rented 'Comedy' or 'Classics'
+customers_rented_comedy_classic = FILTER customer_film_info BY category_name MATCHES '^(Comedy|Classics).*$';
+-- customers who have rented 'Action' out of customers_not_rented_comedy_classic
+customers_rented_action = FILTER customer_film_info BY category_name MATCHES '^(Action)$';
+-- use left join to get the difference betwee customers_rented_comedy_classic and customers_rented_action
+customers_action_in_comedy_classic = JOIN customers_rented_action BY customer_id LEFT,
+                                          customers_rented_comedy_classic BY customer_id USING 'replicated';
+-- customers who have rented 'ACTION' but not 'Comedy' or 'Classics'
+customers_info = DISTINCT (FILTER customers_action_in_comedy_classic BY customers_rented_comedy_classic::customer_id is null);
+customers_final = FOREACH ...;
+customers_final_ordered = ...;
+
+STORE customers_final_ordered INTO '$outputDir/query_c_result' ...;
 ```
 *Snippet 10: Query C*
 
 The below lines shows the content captured from the result file:
 ```text
-
+customer_id,    first_name, last_name
+------------    ----------- ---------
+433,            DON,        BONE
+432,            EDWIN,      BURK
+139,            AMBER,      DIXON
+223,            MELINDA,    FERNANDEZ
+445,            MICHEAL,    FORMAN
+250,            JO,         FOWLER
+350,            JUAN,       FRALEY
+164,            JOANN,      GARDNER
+361,            LAWRENCE,   LAWTON
+323,            MATTHEW,    MAHAN
+452,            TOM,        MILNER
+232,            CONSTANCE,  REID
+330,            SCOTT,      SHELLEY
+17,             DONNA,      THOMPSON
+171,            DOLORES,    WAGNER
+90,             RUBY,       WASHINGTON
+213,            GINA,       WILLIAMSON
 ```
 *Snippet 11: The Result of Query C*
 
 ### Query D
+This problem is asking for a list of actors who have appeared in the most English-language movies. The involved data files are `film_actor.csv`, `actor.csv`, `film.csv`, `language.csv`.
+
 The below code snippet shows a few lines of the script:
-```sql
+```piglatin
+english = FILTER language BY name MATCHES '^English$';
+english_films = JOIN film BY language, english by language_id USING 'replicated';
+english_film_actors = JOIN film_actor BY film_id, english_films by film::film_id USING 'replicated';
+actor_films_counts = FOREACH (GROUP english_film_actors BY film_actor::actor_id)
+                     GENERATE group AS actor_id,
+                              COUNT(english_film_actors) AS actor_count;
+actor_max_film_count = LIMIT (ORDER actor_films_counts BY actor_count DESC) 1;
+which_actor = JOIN actor_max_film_count BY actor_id, actor BY actor_id USING 'replicated';
+result = FOREACH which_actor ...;
+
+STORE result INTO '$outputDir/query_d_result' ...;
 ```
 *Snippet 12: Query D*
 
 The below lines shows the content captured from the result file:
 ```text
-
+actor_id,   first_name, last_name
+---------   ----------- ---------
+107,        GINA,       DEGENERES
 ```
 *Snippet 13: The Result of Query D*
 
 ### Query E
-This problem is asking for the count of the distinct movie names which were rented for exactly 10 days from store(s) that Mike works. Therefore by the analysis, there are 5 data files involved, which are `film.csv`, `inventory.csv`, `rental.csv`, `store.csv`, `staff.csv`.
+This problem is asking for the count of the distinct movie names which were rented for exactly 10 days from store(s) that Mike works. Therefore by the analysis, there are 4 data files involved, which are `film.csv`, `inventory.csv`, `rental.csv`,  `staff.csv`.
 
 The below code snippet shows a few lines of the script:
-```sql
+```piglatin
 staff = LOAD '$inputDir/staff.csv' ...;
-
 film = LOAD '$inputDir/film.csv' ...;
-
 inventory = LOAD '$inputDir/inventory.csv' ...;
-
 rental = LOAD '$inputDir/rental.csv' ...;
 
-stores = LOAD '$inputDir/store.csv' ...;
-
--- get Mike
-mike = FILTER staff BY (fname matches '^Mike');
--- get the rented which are more than 10 days
-rented = FILTER rental
-         BY DaysBetween(
-             ToDate(REPLACE(return_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss'),
-             ToDate(REPLACE(rental_date, '\\s+', ' '), 'yyyy-MM-dd HH:mm:ss')
-             ) + 1 == 10;
--- we need the inventory_ids only
-rented_inventory = FOREACH rented GENERATE inventory_id as inventory_id:int;
--- get inventory by store, only inventory_id, film_id are needed:
-film_inventory = FOREACH (JOIN mike BY store_id, stores BY store_id, inventory by store_id)
-                 GENERATE inventory_id, film_id;
+rented_w_days = ...;
+-- rented films for 10 days
+rented_10d = FILTER rented_w_days BY DaysBetween(return_date,  rental_date) == 10;
+-- get Mike's store and inventory
+mike = FILTER staff BY (fname MATCHES '^Mike$');
+stores_mike_inventory = ...;
+-- films that were rented in the store that Mike works
+rented_mike_store_10d = ...;
+films_10d = FOREACH rented_mike_store_10d
+            GENERATE stores_mike_inventory::film_id AS film_id;
 -- get unique ids
-unique_films = DISTINCT (
-    FOREACH (JOIN rented_inventory BY inventory_id, film_inventory BY inventory_id)
-    GENERATE film_id AS film_id:int);
+unique_films_10d = ...;
 -- get the count
-final = FOREACH (GROUP unique_films ALL)
-        GENERATE COUNT(unique_films);
+final = FOREACH (GROUP unique_films_10d ALL)
+        GENERATE COUNT(unique_films_10d);
 
-STORE final INTO ...; -- saving the result
+STORE final INTO '$outputDir/query_e_result'...;
 ```
 *Snippet 14: Query E*
 
@@ -294,7 +322,7 @@ The below lines shows the content captured from the result file:
 ```bash
 count of films
 --------------
-344
+61
 ```
 *Snippet 15: The Result of Query E*
 
@@ -302,7 +330,7 @@ count of films
 This problem is asking for an ordered list of the actor names. The data files involved are `film_actor.csv`, `actor.csv`
 
 The below code snippet shows a few lines of the script:
-```sql
+```piglatin
 film_actors = LOAD '$inputDir/film_actor.csv' ...;
 
 actors = LOAD '$inputDir/actor.csv' ...;
@@ -311,7 +339,7 @@ actors = LOAD '$inputDir/actor.csv' ...;
 actor_counts = FOREACH (GROUP film_actors BY film_id)
                GENERATE
                    group as film_id:long,
-                   COUNT(film_actors.$0) as actor_count:long;
+                   COUNT(film_actors) as actor_count:long;
 
 sorted_actor_counts = ... ; -- sort film group by actor counts
 max_actor_counts = LIMIT sorted_actor_counts 1;
